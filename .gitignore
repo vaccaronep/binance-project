@@ -1,3 +1,6 @@
+db-account/data
+db-orders/data
+db-users/data
 # Logs
 logs
 *.log
