@@ -2,8 +2,11 @@ import { Controller, HttpStatus } from '@nestjs/common';
 import { UserService } from './services/user.service';
 import { MessagePattern } from '@nestjs/microservices';
 import { IUser } from './interfaces/user.interface';
-
-interface IUserCreateResponse {}
+import {
+  IUsersGetResponse,
+  IUserGetResponse,
+} from './interfaces/user-get-users-response.interface';
+import { IUserCreateResponse } from './interfaces/user-create-response.interface';
 
 @Controller()
 export class AppController {
@@ -33,6 +36,7 @@ export class AppController {
       } else {
         try {
           userParams.is_confirmed = false;
+          userParams.is_active = true;
           const createdUser = await this.userService.createUser(userParams);
           delete createdUser.password;
           result = {
@@ -60,5 +64,126 @@ export class AppController {
     }
 
     return result;
+  }
+
+  @MessagePattern({ cmd: 'users_get_all' })
+  public async getAllUsers(): Promise<IUsersGetResponse> {
+    let result: IUsersGetResponse;
+    try {
+      const users = await this.userService.searchUser({ email: '' });
+      // eslint-disable-next-line prefer-const
+      result = {
+        status: HttpStatus.OK,
+        message: 'user_get_all_success',
+        errors: null,
+        users,
+      };
+    } catch (error) {
+      result = {
+        status: HttpStatus.PRECONDITION_FAILED,
+        message: 'users_get_all_failed',
+        users: null,
+        errors: error.errors,
+      };
+    }
+
+    return result;
+  }
+
+  @MessagePattern({ cmd: 'user_login' })
+  public async loginUser(userParams: IUser): Promise<IUserGetResponse> {
+    let result: IUserGetResponse;
+
+    if (userParams.email && userParams.password) {
+      const user = await this.userService.searchUser({
+        email: userParams.email,
+      });
+
+      if (user && user[0]) {
+        if (await user[0].compareEncryptedPassword(userParams.password)) {
+          result = {
+            status: HttpStatus.OK,
+            message: 'user_search_by_credentials_success',
+            user: user[0],
+          };
+        } else {
+          result = {
+            status: HttpStatus.NOT_FOUND,
+            message: 'user_search_by_credentials_not_match',
+            user: null,
+          };
+        }
+      } else {
+        result = {
+          status: HttpStatus.NOT_FOUND,
+          message: 'user_search_by_credentials_not_found',
+          user: null,
+        };
+      }
+    } else {
+      result = {
+        status: HttpStatus.NOT_FOUND,
+        message: 'user_search_by_credentials_not_found',
+        user: null,
+      };
+    }
+
+    return result;
+  }
+
+  @MessagePattern({ cmd: 'user_get_by_id' })
+  public async getUserById(userId: string) {
+    let result: IUserGetResponse;
+
+    if (userId) {
+      const user = await this.userService.searchUserById(userId);
+      if (user) {
+        result = {
+          status: HttpStatus.OK,
+          message: 'user_get_by_id_success',
+          user,
+        };
+      } else {
+        result = {
+          status: HttpStatus.NOT_FOUND,
+          message: 'user_get_by_id_not_found',
+          user: null,
+        };
+      }
+    } else {
+      result = {
+        status: HttpStatus.BAD_REQUEST,
+        message: 'user_get_by_id_bad_request',
+        user: null,
+      };
+    }
+
+    return result;
+  }
+
+  @MessagePattern({ cmd: 'user_deactivate' })
+  public async deactiveUser(userId: string) {
+    if (userId) {
+      const user = await this.userService.deactivateUser(userId);
+      if (user) {
+        return {
+          status: HttpStatus.OK,
+          message: 'user_deactivate_success',
+          user,
+        };
+      } else {
+        return {
+          status: HttpStatus.NOT_FOUND,
+          message: 'user_deactivate_not_found',
+          user: null,
+        };
+      }
+    } else {
+      return {
+        status: HttpStatus.BAD_REQUEST,
+        message: 'user_deactivate_bad_request',
+        user: null,
+      };
+    }
   }
 }

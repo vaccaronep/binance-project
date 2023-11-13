@@ -1,14 +1,31 @@
 import { Module } from '@nestjs/common';
 import { BinanceService } from './binance.service';
-import { WebsocketBinanceService } from './websocket.service';
-import { WebSocketModule } from 'nestjs-websocket';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { WSService } from './websocket.client.service';
+import { ClientProxyFactory, Transport } from '@nestjs/microservices';
+import { BinanceHttpService } from './binance.http.service';
+import { HttpModule } from '@nestjs/axios';
 
 @Module({
-  imports: [
-    WebSocketModule.forRoot({
-      url: 'wss://stream.binance.com:9443/ws/bnbusdt@trade',
-    }),
+  imports: [ConfigModule.forRoot(), HttpModule],
+  providers: [
+    BinanceHttpService,
+    BinanceService,
+    ConfigService,
+    WSService,
+    {
+      provide: 'API_GATEWAY_SUBSCRIBER',
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => {
+        return ClientProxyFactory.create({
+          transport: Transport.REDIS,
+          options: {
+            host: configService.get('API_GATEWAY_HOST'),
+            port: configService.get('API_GATEWAY_PORT'),
+          },
+        });
+      },
+    },
   ],
-  providers: [BinanceService, WebsocketBinanceService],
 })
 export class BinanceModule {}

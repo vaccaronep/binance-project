@@ -15,8 +15,11 @@ async function bootstrap() {
   const options = new DocumentBuilder()
     .setTitle('API docs')
     .addTag('orders')
+    .addTag('users')
+    .addTag('rules')
     .setVersion('1.0')
     .build();
+
   const document = SwaggerModule.createDocument(app, options);
   SwaggerModule.setup('api', app, document);
   await app.startAllMicroservices();
