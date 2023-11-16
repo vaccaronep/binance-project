@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { BinanceService } from './binance.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { WSService } from './binance.ws.client.service';
 // import { ClientProxyFactory, Transport } from '@nestjs/microservices';
@@ -11,7 +10,6 @@ import { RedisModule } from 'src/redis/redis.module';
   imports: [ConfigModule.forRoot(), HttpModule, RedisModule],
   providers: [
     BinanceHttpService,
-    BinanceService,
     ConfigService,
     WSService,
     // {
@@ -28,5 +26,6 @@ import { RedisModule } from 'src/redis/redis.module';
     //   },
     // },
   ],
+  exports: [BinanceHttpService],
 })
 export class BinanceModule {}

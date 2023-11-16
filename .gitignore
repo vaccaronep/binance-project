@@ -1,6 +1,8 @@
 db-account/data
 db-orders/data
 db-users/data
+db-rules/data
+.env
 # Logs
 logs
 *.log

@@ -26,6 +26,17 @@ services:
     depends_on:
       - redis
       - dborders
+  account:
+    container_name: "account-api"
+    build: ./account-microservice
+    restart: always
+    hostname: orders
+    env_file:
+      - ./account-microservice/.env
+    networks:
+      - backend
+    depends_on:
+      - redis
   rules:
     container_name: "rules-api"
     build: ./rules-microservice
