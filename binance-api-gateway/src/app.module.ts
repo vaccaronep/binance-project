@@ -10,6 +10,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { AuthGuard } from './guards/auth.guard';
 import { PermissionGuard } from './guards/permission.guard';
 import { StrategiesController } from './strategies.controller';
+import { AccountController } from './account.controller';
 
 @Module({
   imports: [ConfigModule.forRoot(), RedisModule],
@@ -18,6 +19,7 @@ import { StrategiesController } from './strategies.controller';
     RulesController,
     UsersController,
     StrategiesController,
+    AccountController,
   ],
   providers: [
     {

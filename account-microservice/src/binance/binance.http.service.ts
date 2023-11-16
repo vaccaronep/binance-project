@@ -29,6 +29,30 @@ export class BinanceHttpService {
     );
   }
 
+  async getAccount(apikey: string, secret: string) {
+    try {
+      const result = await firstValueFrom(
+        await this._privateRequest('GET', '/api/v3/account', apikey, secret),
+      );
+      return result;
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  async getAccountTradeList(apiKey: string, secret: string, ticker: string) {
+    try {
+      const result = await firstValueFrom(
+        await this._privateRequest('GET', '/api/v3/myTrades', apiKey, secret, {
+          symbol: ticker,
+        }),
+      );
+      return result;
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
   private async getServerData(apikey: string) {
     const {
       data: { serverTime },

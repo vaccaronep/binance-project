@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './orders.controller';
+import { OrdersController } from './orders.controller';
 import { OrdersService } from './services/orders.service';
 import { RedisModule } from './redis/redis.module';
 import { BinanceModule } from './binance/binance.module';
@@ -14,7 +14,7 @@ import { MongoConfigService } from './services/config/mongo.config.service';
       useClass: MongoConfigService,
     }),
   ],
-  controllers: [AppController],
+  controllers: [OrdersController],
   providers: [OrdersService],
 })
-export class AppModule {}
+export class OrderModule {}

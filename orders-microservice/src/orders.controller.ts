@@ -3,11 +3,17 @@ import { OrdersService } from './services/orders.service';
 import { MessagePattern } from '@nestjs/microservices';
 
 @Controller()
-export class AppController {
+export class OrdersController {
   constructor(private readonly orderService: OrdersService) {}
 
-  @MessagePattern({ cmd: 'get_hello' })
-  getHello(): string {
-    return this.orderService.getHello();
+  @MessagePattern({ cmd: 'order_new' })
+  placeOrder(): string {
+    return this.orderService.newOrder();
   }
+
+  //submit order
+  //market
+  //limit
+  //take_profit
+  //stop_loss<<
 }

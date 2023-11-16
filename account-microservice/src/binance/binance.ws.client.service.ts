@@ -1,10 +1,11 @@
 // socket-client.ts
-import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import * as WebSocket from 'ws';
 import { timer } from 'rxjs';
-import { ClientProxy } from '@nestjs/microservices';
 import { ConfigService } from '@nestjs/config';
 import { BinanceHttpService } from './binance.http.service';
+import { AccountUpdate } from 'src/interfaces/stream/account.update.interface';
+import { RedisService } from 'src/services/redis.service';
 // import { OrderUpdate } from 'src/interfaces/stream/order.update.interface';
 
 @Injectable()
@@ -17,15 +18,15 @@ export class WSService implements OnModuleInit {
   constructor(
     private configService: ConfigService,
     private http: BinanceHttpService,
-    @Inject('API_GATEWAY_SUBSCRIBER') private client: ClientProxy,
+    private redisClient: RedisService,
   ) {}
   onModuleInit() {
-    this.apiKey = this.configService.get('BINANCE_API_KEY');
-    // this.connect();
-    // setInterval(
-    //   () => this.http.refreshListenKey(this.listenKey, this.apiKey),
-    //   1200000,
-    // );
+    this.apiKey = this.configService.get('BINANCE_TEST_API_KEY');
+    this.connect();
+    setInterval(
+      () => this.http.refreshListenKey(this.listenKey, this.apiKey),
+      1200000,
+    );
   }
 
   async connect() {
@@ -35,9 +36,7 @@ export class WSService implements OnModuleInit {
     }
 
     this.ws = new WebSocket(
-      `${this.configService.get('BINANCE_WS_BASE_URL_MULTIPLE')}=${
-        this.listenKey
-      }`,
+      `${this.configService.get('BINANCE_WS_TEST_BASE_URL')}/${this.listenKey}`,
     );
 
     this.ws.on('open', () => {
@@ -48,11 +47,6 @@ export class WSService implements OnModuleInit {
     this.ws.on('ping', (data: Buffer) => {
       console.log(`A ping ${data.toString()} is received from the server.`);
       this.ws.pong();
-      // this.client.emit('order_update', { message: data.toString() });
-      // this.http.getAccount(
-      //   this.configService.get('BINANCE_API_KEY'),
-      //   this.configService.get('BINANCE_API_SECRET'),
-      // );
     });
 
     this.ws.on('pong', () => {
@@ -75,11 +69,12 @@ export class WSService implements OnModuleInit {
     });
 
     this.ws.on('message', (message: any) => {
-      // const binanceMessage: OrderUpdate = JSON.parse(message.toString());
-      // if (binanceMessage.e === 'executionReport') {
-      //   this.client.emit('order_update', { message: binanceMessage });
-      // }
-      console.log(JSON.stringify(message.toString()));
+      const binanceMessage: AccountUpdate = JSON.parse(message.toString());
+
+      if (binanceMessage.e === 'outboundAccountPosition') {
+        this.redisClient.publish('account_update', { message: binanceMessage });
+      }
+      console.log(JSON.stringify(binanceMessage));
     });
   }
 

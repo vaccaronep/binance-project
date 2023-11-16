@@ -6,8 +6,7 @@ import { RedisService } from './redis.service';
 export class OrdersService {
   constructor(private readonly redisService: RedisService) {}
 
-  getHello(): string {
-    this.redisService.publish();
+  newOrder(): string {
     return 'Hello World!';
   }
 }
