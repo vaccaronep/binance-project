@@ -29,6 +29,19 @@ export class BinanceHttpService {
     );
   }
 
+  async placeNewOrder(apikey: string, secret: string, params: any) {
+    const data = await firstValueFrom(
+      await this._privateRequest(
+        'POST',
+        '/api/v3/order',
+        apikey,
+        secret,
+        params,
+      ),
+    );
+    return data;
+  }
+
   private async getServerData(apikey: string) {
     const {
       data: { serverTime },
@@ -71,7 +84,6 @@ export class BinanceHttpService {
     const timestamp = await this.getServerData(apiKey);
     const queryString = buildQueryString({ ...params, timestamp });
     const signature = encryptParams(secret, queryString);
-
     try {
       const res = this.http.request({
         method,

@@ -5,9 +5,11 @@ import { RedisModule } from './redis/redis.module';
 import { BinanceModule } from './binance/binance.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { MongoConfigService } from './services/config/mongo.config.service';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
+    ConfigModule,
     RedisModule,
     BinanceModule,
     MongooseModule.forRootAsync({

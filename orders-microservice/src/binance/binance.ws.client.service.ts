@@ -23,10 +23,10 @@ export class WSService implements OnModuleInit {
   onModuleInit() {
     this.apiKey = this.configService.get('BINANCE_TEST_API_KEY');
     this.connect();
-    // setInterval(
-    //   () => this.http.refreshListenKey(this.listenKey, this.apiKey),
-    //   1200000,
-    // );
+    setInterval(
+      () => this.http.refreshListenKey(this.listenKey, this.apiKey),
+      1200000,
+    );
   }
 
   async connect() {
@@ -71,11 +71,11 @@ export class WSService implements OnModuleInit {
     this.ws.on('message', (message: any) => {
       const binanceMessage: OrderUpdate = JSON.parse(message.toString());
       if (binanceMessage.e === 'executionReport') {
-        this.redisClient.publish('order_update', { message: binanceMessage });
+        const message = JSON.stringify(binanceMessage);
+        this.redisClient.publish('order_update', { message });
+        //guardamos en la base la order
+        //analizar si tenemos que hacer el SL y el TP
       }
-      //guardamos en la base la order
-      //analizar si tenemos que hacer el SL y el TP
-      console.log(JSON.stringify(message.toString()));
     });
   }
 

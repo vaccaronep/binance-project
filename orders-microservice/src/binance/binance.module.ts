@@ -28,5 +28,6 @@ import { RedisModule } from 'src/redis/redis.module';
     //   },
     // },
   ],
+  exports: [BinanceHttpService],
 })
 export class BinanceModule {}

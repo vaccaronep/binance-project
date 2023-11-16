@@ -72,9 +72,10 @@ export class WSService implements OnModuleInit {
       const binanceMessage: AccountUpdate = JSON.parse(message.toString());
 
       if (binanceMessage.e === 'outboundAccountPosition') {
-        this.redisClient.publish('account_update', { message: binanceMessage });
+        const message = JSON.stringify(binanceMessage);
+        this.redisClient.publish('account_update', { message });
       }
-      console.log(JSON.stringify(binanceMessage));
+      console.log(JSON.parse(message.toString()));
     });
   }
 

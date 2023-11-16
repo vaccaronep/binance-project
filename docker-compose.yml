@@ -30,7 +30,7 @@ services:
     container_name: "account-api"
     build: ./account-microservice
     restart: always
-    hostname: orders
+    hostname: account
     env_file:
       - ./account-microservice/.env
     networks:

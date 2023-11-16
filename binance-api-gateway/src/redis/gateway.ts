@@ -18,4 +18,8 @@ export class MyGateway implements OnModuleInit {
   newMessage(message: string) {
     this.server.emit('order_update', message);
   }
+
+  updateAccount(message: string) {
+    this.server.emit('account_update', message);
+  }
 }
