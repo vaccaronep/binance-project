@@ -33,4 +33,5 @@ export interface OrderUpdate {
   Q: string; //"0.00000000",             // Quote Order Quantity
   W: string; //1499405658657,            // Working Time; This is only visible if the order has been placed on the book.
   V: string; //"NONE"                    // selfTradePreventionMode
+  j: number; //StrategyId
 }

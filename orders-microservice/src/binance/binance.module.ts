@@ -1,19 +1,37 @@
 import { Module } from '@nestjs/common';
-import { BinanceService } from './binance.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { WSService } from './binance.ws.client.service';
 // import { ClientProxyFactory, Transport } from '@nestjs/microservices';
 import { BinanceHttpService } from './binance.http.service';
 import { HttpModule } from '@nestjs/axios';
 import { RedisModule } from 'src/redis/redis.module';
+import { OrdersService } from 'src/services/orders.service';
+import { MongooseModule } from '@nestjs/mongoose';
+import { MongoConfigService } from 'src/services/config/mongo.config.service';
+import { OrderSchema } from 'src/schema/order.schema';
 
 @Module({
-  imports: [ConfigModule.forRoot(), HttpModule, RedisModule],
+  imports: [
+    ConfigModule.forRoot(),
+    HttpModule,
+    RedisModule,
+    MongooseModule.forRootAsync({
+      useClass: MongoConfigService,
+    }),
+    MongooseModule.forFeature([
+      {
+        name: 'Order',
+        schema: OrderSchema,
+        collection: 'orders',
+      },
+    ]),
+  ],
   providers: [
     BinanceHttpService,
-    BinanceService,
     ConfigService,
     WSService,
+    OrdersService,
+
     // {
     //   provide: 'API_GATEWAY_SUBSCRIBER',
     //   inject: [ConfigService],

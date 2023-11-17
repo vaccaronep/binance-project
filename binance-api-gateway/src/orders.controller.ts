@@ -1,4 +1,13 @@
-import { Body, Controller, Get, Inject, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpException,
+  HttpStatus,
+  Inject,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
@@ -11,14 +20,35 @@ export class OrdersController {
     @Inject('ORDERS_SERVICE') private readonly ordersMicroService: ClientProxy,
   ) {}
 
-  @Get()
+  @Get('/all')
   @Authorization(true)
-  async findAll() {
+  async findAll(
+    @Query('limit') limit?: string,
+    @Query('symbol') symbol?: string,
+  ) {
     const ordersMicroserviceResponse: any = await firstValueFrom(
-      this.ordersMicroService.send({ cmd: 'get_hello' }, {}),
+      this.ordersMicroService.send(
+        { cmd: 'orders_get_all' },
+        { limit, symbol },
+      ),
     );
+
+    if (ordersMicroserviceResponse.status !== HttpStatus.OK) {
+      throw new HttpException(
+        {
+          message: ordersMicroserviceResponse.message,
+          data: null,
+          errors: ordersMicroserviceResponse.errors,
+        },
+        ordersMicroserviceResponse.status,
+      );
+    }
     return {
-      response: ordersMicroserviceResponse,
+      message: ordersMicroserviceResponse.message,
+      data: {
+        orders: ordersMicroserviceResponse.orders,
+      },
+      errors: null,
     };
   }
 
@@ -34,7 +64,6 @@ export class OrdersController {
       strategy: string;
     },
   ) {
-    console.log(data);
     const ordersMicroserviceResponse: any = await firstValueFrom(
       this.ordersMicroService.send({ cmd: 'order_new' }, data),
     );

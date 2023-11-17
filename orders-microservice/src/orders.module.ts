@@ -6,6 +6,7 @@ import { BinanceModule } from './binance/binance.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { MongoConfigService } from './services/config/mongo.config.service';
 import { ConfigModule } from '@nestjs/config';
+import { OrderSchema } from './schema/order.schema';
 
 @Module({
   imports: [
@@ -15,6 +16,13 @@ import { ConfigModule } from '@nestjs/config';
     MongooseModule.forRootAsync({
       useClass: MongoConfigService,
     }),
+    MongooseModule.forFeature([
+      {
+        name: 'Order',
+        schema: OrderSchema,
+        collection: 'orders',
+      },
+    ]),
   ],
   controllers: [OrdersController],
   providers: [OrdersService],

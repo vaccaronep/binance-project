@@ -6,6 +6,7 @@ import { ConfigService } from '@nestjs/config';
 import { BinanceHttpService } from './binance.http.service';
 import { OrderUpdate } from 'src/interfaces/stream/order.update.interface';
 import { RedisService } from 'src/services/redis.service';
+import { OrdersService } from 'src/services/orders.service';
 // import { OrderUpdate } from 'src/interfaces/stream/order.update.interface';
 
 @Injectable()
@@ -19,6 +20,7 @@ export class WSService implements OnModuleInit {
     private configService: ConfigService,
     private http: BinanceHttpService,
     private redisClient: RedisService,
+    private orderClient: OrdersService,
   ) {}
   onModuleInit() {
     this.apiKey = this.configService.get('BINANCE_TEST_API_KEY');
@@ -73,6 +75,7 @@ export class WSService implements OnModuleInit {
       if (binanceMessage.e === 'executionReport') {
         const message = JSON.stringify(binanceMessage);
         this.redisClient.publish('order_update', { message });
+        this.orderClient.saveOrder(binanceMessage);
         //guardamos en la base la order
         //analizar si tenemos que hacer el SL y el TP
       }
