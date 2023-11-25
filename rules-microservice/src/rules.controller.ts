@@ -12,14 +12,13 @@ export class RulesController {
   constructor(private readonly rulesService: RulesService) {}
 
   @MessagePattern({ cmd: 'rule_create' })
-  async createRule(ruleParams: IRule): Promise<IRuleCreateResponse> {
+  async createRule(params: {
+    rule: IRule;
+    userId: string;
+  }): Promise<IRuleCreateResponse> {
     let result: IRuleCreateResponse;
-    if (
-      !ruleParams.ticker ||
-      !ruleParams.take_profit ||
-      !ruleParams.stop_loss ||
-      ruleParams.userId
-    ) {
+    const rule = params.rule;
+    if (!rule.ticker || rule.userId || rule.pyramiding || rule.quantity_trade) {
       result = {
         status: HttpStatus.CONFLICT,
         message: 'rule_create_conflict',
@@ -32,7 +31,9 @@ export class RulesController {
       };
     }
     try {
-      const createdRule = await this.rulesService.createRule(ruleParams);
+      rule.userId = params.userId;
+      rule.created_by = params.userId;
+      const createdRule = await this.rulesService.createRule(rule);
       result = {
         status: HttpStatus.CREATED,
         message: 'rule_create_success',
@@ -54,12 +55,16 @@ export class RulesController {
   @MessagePattern({ cmd: 'rules_get_all' })
   async getAll(data: IGetAllRulesParams): Promise<IRuleGetResponse> {
     let result: IRuleGetResponse;
+    console.log(data);
     if (data) {
       try {
         const rules = await this.rulesService.getAllRules(
           data.userId,
           data.ruleId,
           data.ticker,
+          data.is_active,
+          data.is_future,
+          data.strategyId,
         );
         result = {
           rules,

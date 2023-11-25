@@ -75,7 +75,6 @@ export class WSService implements OnModuleInit {
         const message = JSON.stringify(binanceMessage);
         this.redisClient.publish('account_update', { message });
       }
-      console.log(JSON.parse(message.toString()));
     });
   }
 

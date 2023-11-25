@@ -1,12 +1,15 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable, forwardRef } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { IStrategy } from 'src/interfaces/strategy.interface';
+import { RulesService } from './rules.service';
 
 @Injectable()
 export class StrategiesService {
   constructor(
     @InjectModel('Strategy') private readonly strategyModel: Model<IStrategy>,
+    @Inject(forwardRef(() => RulesService))
+    private readonly rulesService: RulesService,
   ) {}
 
   async getAllStrategies(data: { name: string }): Promise<IStrategy[]> {

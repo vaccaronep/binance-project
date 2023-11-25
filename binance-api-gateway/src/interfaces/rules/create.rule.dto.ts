@@ -1,12 +1,24 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-export class CreateRuleDto {
+enum actionTypes {
+  'TAKE_PROFIT' = 'TAKE_PROFIT',
+  'STOP_LOSS' = 'STOP_LOSS',
+}
+class ActionDto {
   @ApiProperty({
     required: true,
-    uniqueItems: true,
-    example: 'uuid',
+    enum: actionTypes,
+    example: Object.keys(actionTypes),
   })
-  userId: string;
+  type: string;
+  @ApiProperty({
+    required: true,
+    example: '0.03',
+  })
+  percentage: string;
+}
+
+export class CreateRuleDto {
   @ApiProperty({
     required: true,
     uniqueItems: true,
@@ -16,19 +28,27 @@ export class CreateRuleDto {
   @ApiProperty({
     required: true,
     uniqueItems: true,
-    example: '0.07%',
+    example: 'rsi 14, vol 80, macd 24',
   })
-  take_profit: number;
-  @ApiProperty({
-    required: true,
-    uniqueItems: true,
-    example: '0.03%',
-  })
-  stop_loss: number;
+  params: string;
   @ApiProperty({
     required: true,
     uniqueItems: true,
     example: 'true',
   })
   is_future: boolean;
+  @ApiProperty({
+    required: true,
+    example: '1',
+  })
+  pyramiding: number;
+  @ApiProperty({
+    required: true,
+    example: '1',
+  })
+  quantity_trade: number;
+  @ApiProperty({
+    required: true,
+  })
+  actions: ActionDto[];
 }

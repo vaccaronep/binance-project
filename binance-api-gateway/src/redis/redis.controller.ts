@@ -17,13 +17,11 @@ export class RedisController {
 
   @EventPattern('order_update')
   orderUpdate(message: string) {
-    console.log('desde order update ' + message);
     this.gateway.newMessage(message);
   }
 
   @EventPattern('account_update')
   accountUpdate(message: string) {
-    console.log('desde account update ' + message);
     this.gateway.updateAccount(message);
   }
 }

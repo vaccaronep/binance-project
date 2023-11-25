@@ -32,6 +32,9 @@ export class UserService {
   }
 
   public async createUser(user: IUser): Promise<IUser> {
+    if (!user.wishlist) {
+      user.wishlist = ['EHTUSDT', 'BTCUSDT', 'BNBUSDT'];
+    }
     const userModel = new this.userModel(user);
     return await userModel.save();
   }

@@ -24,3 +24,47 @@ rules-microservice:
 
 users-microservice:
   es el encargado de mantener los usuarios. Queda pendiente el modulo de permisos (chequear que el usuario este activo por ahora).
+
+
+TODO LIST:
+
+-wishlist para pegarle al market stream
+  -> si un user no carga ninguno al momento de la carga, ponerle btc etch bnb xrp.
+  -> ver como inicializar el ws con esta config.
+  -> estaria bueno hacer un join y que haga un solo market ws trayendo data.
+  -> devolver todos los tickers sobre un mismo ws, y que el FE filtre a lo sumo?
+  -> al cambiar la wishlist(user-microservice) se le deberia avisar(una vez que se grabo en la db bien) al market-microservice para levantar un nuevo ws con la wishlist nueva. (no hace falta bajarlo, el ws de market soporta el subscribe/unsubscribe, seria hacer un nuevo send sobre esa instancia para agregar el par.)
+
+-poder switchear entre test y real (account-service)
+  -> que se pueda cargar esta info (keys y flags en la db?)
+  -> al momentor por ahora solo de hacer las orders, implicaria las consultas a la API.
+  -> si se cambia el flag avisar al orders-microservice para apagar el ws y apuntar a los nuevos.
+  -> pegarle a pythonanywhere para hacer un push de que se cambiaron las keys/flag.
+  -> agregar funcionalidad para soportar spot/futuros.
+  -> armar otro ws para spot y futures, y que aplique la misma config de test y real.
+
+
+que me faltaria para operar hoy y probar?
+setear reglas.
+poner limites para operar.
+
+
+
+
+                                                                                                              ||||||||||||||||||
+-poder configurar maximos segun moneda
+  -> en el account agregar la opcion de setear maximos para las estrategias (es decir, cantidad de plata por trade y hasta cuantos trades activos).
+    {
+      SPOT: {
+        ETHUSDT: {
+          CASH: 25,
+          PYRAMIDING: 4,
+          ACTUAL_TRADES: 3
+        }
+      }
+    }
+  -> pegarle a pythonanywhere para actualizar esta info, asi el bot no sigue cargando data.
+  -> mismo cuando se hace un sell para el SL o el TP se deberia actualizar en pythonanywhere para saber que pudede empzar a poner orders nuevamente.
+
+-configurar si la estrategia es manejada por trading view (emite buy and sell orders) o se maneja por la api.
+-sincronizar orders de binance con nuestra db (mytrades y dsp insertar en la db las orders ids que no estan).

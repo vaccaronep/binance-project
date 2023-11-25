@@ -13,7 +13,6 @@ export class AccountService {
     const apikey = this.configService.get('BINANCE_TEST_API_KEY');
     const secret = this.configService.get('BINANCE_TEST_API_SECRET');
     const response = await this.binanceHttpService.getAccount(apikey, secret);
-    console.log(response);
     return response.data;
   }
 
@@ -25,7 +24,6 @@ export class AccountService {
       secret,
       ticker,
     );
-    // response.status !== 200
     return response.data;
   }
 }

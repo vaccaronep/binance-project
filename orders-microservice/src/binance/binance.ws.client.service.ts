@@ -70,14 +70,14 @@ export class WSService implements OnModuleInit {
       });
     });
 
-    this.ws.on('message', (message: any) => {
+    this.ws.on('message', async (message: any) => {
       const binanceMessage: OrderUpdate = JSON.parse(message.toString());
       if (binanceMessage.e === 'executionReport') {
-        const message = JSON.stringify(binanceMessage);
-        this.redisClient.publish('order_update', { message });
-        this.orderClient.saveOrder(binanceMessage);
-        //guardamos en la base la order
         //analizar si tenemos que hacer el SL y el TP
+        const savedObject = await this.orderClient.saveOrder(binanceMessage);
+        this.redisClient.publish('order_update', {
+          message: JSON.stringify(savedObject),
+        });
       }
     });
   }
