@@ -13,6 +13,7 @@ export interface IUserSchema extends mongoose.Document {
   password: string;
   is_confirmed: boolean;
   is_active: boolean;
+  wishlist: string[];
   comparePassword: (password: string) => Promise<boolean>;
   getEncryptedPassword: (password: string) => Promise<string>;
 }
@@ -42,6 +43,11 @@ export const UserSchema = new mongoose.Schema<IUserSchema>(
       required: [true, 'Password can not be empty'],
       minlength: [6, 'Password should include at least 6 chars'],
     },
+    wishlist: [
+      {
+        type: String,
+      },
+    ],
   },
   {
     toObject: {
@@ -68,6 +74,7 @@ UserSchema.methods.compareEncryptedPassword = function (password: string) {
 };
 
 UserSchema.pre('save', async function (next) {
+  this.wishlist = this.wishlist.map((s) => s.toLocaleUpperCase());
   if (!this.isModified('password')) {
     return next();
   }

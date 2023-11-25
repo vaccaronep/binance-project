@@ -57,7 +57,7 @@ export class OrdersService {
     return query.exec();
   }
 
-  saveOrder(binanceOrder: OrderUpdate) {
+  saveOrder(binanceOrder: OrderUpdate): Promise<IOrder> {
     const userModel = new this.orderModel({
       eventType: binanceOrder.e,
       eventTime: binanceOrder.E,

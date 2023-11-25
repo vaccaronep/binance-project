@@ -6,6 +6,7 @@ export interface IUser extends Document {
   password: string;
   is_confirmed: boolean;
   is_active: boolean;
+  wishlist: string[];
   compareEncryptedPassword: (password: string) => boolean;
   getEncryptedPassword: (password: string) => string;
 }

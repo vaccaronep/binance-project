@@ -12,14 +12,17 @@ export class StrategiesController {
   constructor(private readonly strategyService: StrategiesService) {}
 
   @MessagePattern({ cmd: 'strategy_create' })
-  public async createStrategy(
-    strategyParams: IStrategy,
-  ): Promise<IStrategyCreateResponse> {
+  public async createStrategy(params: {
+    strategy: IStrategy;
+    userId: string;
+  }): Promise<IStrategyCreateResponse> {
     let result: IStrategyCreateResponse;
     try {
-      strategyParams.is_active = true;
-      const createdStrategy =
-        await this.strategyService.createStrategy(strategyParams);
+      params.strategy.is_active = true;
+      params.strategy.created_by = params.userId;
+      const createdStrategy = await this.strategyService.createStrategy(
+        params.strategy,
+      );
       result = {
         status: HttpStatus.CREATED,
         message: 'strategy_create_success',

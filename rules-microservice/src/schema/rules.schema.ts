@@ -1,13 +1,17 @@
 import * as mongoose from 'mongoose';
+import { IActionSchema } from './actions.schema';
 
 export interface IRulesSchema extends mongoose.Document {
   userId: string;
   ticker: string;
-  stop_loss: number;
-  take_profit: number;
   is_active: boolean;
   is_future: boolean;
   strategyId: string;
+  quantity_trade: number;
+  pyramiding: number;
+  actions: IActionSchema[];
+  created_by: string;
+  params: string;
 }
 
 export const RuleSchema = new mongoose.Schema<IRulesSchema>(
@@ -34,13 +38,27 @@ export const RuleSchema = new mongoose.Schema<IRulesSchema>(
       default: true,
       required: [true, 'Active can not be empty'],
     },
-    stop_loss: {
-      type: Number,
-      required: [true, 'Stop Loss can not be empty'],
+    params: {
+      type: String,
+      required: [true, 'Params can not be empty'],
     },
-    take_profit: {
+    quantity_trade: {
       type: Number,
-      required: [true, 'Take Profit can not be empty'],
+      required: [true, 'Quantity per trade can not be empty'],
+    },
+    pyramiding: {
+      type: Number,
+      required: [true, 'Pyramiding can not be empty'],
+    },
+    actions: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Action',
+      },
+    ],
+    created_by: {
+      type: String,
+      required: [true, 'Created By can not be empty'],
     },
   },
   {

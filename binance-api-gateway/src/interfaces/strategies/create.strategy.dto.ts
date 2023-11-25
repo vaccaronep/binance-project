@@ -10,7 +10,7 @@ export class CreateStrategyDto {
   @ApiProperty({
     required: true,
     uniqueItems: true,
-    example: 'rsi 14, vol 80, macd 24',
+    example: '1',
   })
-  params: string;
+  tv_id: number;
 }

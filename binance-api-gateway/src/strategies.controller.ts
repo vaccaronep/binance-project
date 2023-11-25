@@ -8,12 +8,14 @@ import {
   Patch,
   Post,
   Query,
+  Req,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { ApiTags } from '@nestjs/swagger';
 import { firstValueFrom } from 'rxjs';
 import { Authorization } from './decorators/auth.decorator';
 import { CreateStrategyDto } from './interfaces/strategies/create.strategy.dto';
+import { IAuthorizedRequest } from './interfaces/common/authorized-request.interface';
 
 @Controller('strategies')
 @ApiTags('strategies')
@@ -24,9 +26,16 @@ export class StrategiesController {
 
   @Post()
   @Authorization(true)
-  async createStrategy(@Body() strategyRequest: CreateStrategyDto) {
+  async createStrategy(
+    @Req() request: IAuthorizedRequest,
+    @Body() strategyRequest: CreateStrategyDto,
+  ) {
+    const userId = request.user.id;
     const strategyMicroServiceResponse: any = await firstValueFrom(
-      this.rulesMicroService.send({ cmd: 'strategy_create' }, strategyRequest),
+      this.rulesMicroService.send(
+        { cmd: 'strategy_create' },
+        { strategy: strategyRequest, userId },
+      ),
     );
 
     if (strategyMicroServiceResponse.status !== HttpStatus.CREATED) {

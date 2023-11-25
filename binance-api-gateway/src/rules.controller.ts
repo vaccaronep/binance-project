@@ -8,12 +8,14 @@ import {
   Patch,
   Post,
   Query,
+  Req,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { ApiTags } from '@nestjs/swagger';
 import { firstValueFrom } from 'rxjs';
 import { CreateRuleDto } from 'src/interfaces/rules/create.rule.dto';
 import { Authorization } from './decorators/auth.decorator';
+import { IAuthorizedRequest } from './interfaces/common/authorized-request.interface';
 
 @Controller('rules')
 @ApiTags('rules')
@@ -24,9 +26,16 @@ export class RulesController {
 
   @Post()
   @Authorization(true)
-  async createrule(@Body() ruleRquest: CreateRuleDto) {
+  async createrule(
+    @Req() request: IAuthorizedRequest,
+    @Body() ruleRequest: CreateRuleDto,
+  ) {
+    const userId = request.user.id;
     const rulesMicroServiceResponse: any = await firstValueFrom(
-      this.rulesMicroService.send({ cmd: 'rule_create' }, ruleRquest),
+      this.rulesMicroService.send(
+        { cmd: 'rule_create' },
+        { rule: ruleRequest, userId },
+      ),
     );
 
     if (rulesMicroServiceResponse.status !== HttpStatus.CREATED) {
@@ -54,11 +63,14 @@ export class RulesController {
     @Query('userId') userId?: string,
     @Query('ruleId') ruleId?: string,
     @Query('ticker') ticker?: string,
+    @Query('strategyId') strategyId?: string,
+    @Query('is_future') is_future?: boolean,
+    @Query('is_active') is_active?: boolean,
   ) {
     const rulesMicroServiceResponse: any = await firstValueFrom(
       this.rulesMicroService.send(
         { cmd: 'rules_get_all' },
-        { userId, ruleId, ticker },
+        { userId, ruleId, ticker, strategyId, is_future, is_active },
       ),
     );
 

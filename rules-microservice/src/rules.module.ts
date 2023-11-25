@@ -7,6 +7,7 @@ import { RuleSchema } from './schema/rules.schema';
 import { StrategiesController } from './strategies.controller';
 import { StrategiesService } from './services/strategies.service';
 import { StrategySchema } from './schema/strategies.schema';
+import { ActionSchema } from './schema/actions.schema';
 
 @Module({
   imports: [
@@ -23,6 +24,11 @@ import { StrategySchema } from './schema/strategies.schema';
         name: 'Strategy',
         schema: StrategySchema,
         collection: 'strategies',
+      },
+      {
+        name: 'Action',
+        schema: ActionSchema,
+        collection: 'actions',
       },
     ]),
   ],

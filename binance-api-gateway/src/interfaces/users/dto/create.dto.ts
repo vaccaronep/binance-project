@@ -11,4 +11,8 @@ export class CreateUserDto {
     example: 'test11',
   })
   password: string;
+  @ApiProperty({
+    example: '["btcusdt", "ethusdt"]',
+  })
+  wishlist: string[];
 }

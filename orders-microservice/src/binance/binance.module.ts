@@ -9,6 +9,7 @@ import { OrdersService } from 'src/services/orders.service';
 import { MongooseModule } from '@nestjs/mongoose';
 import { MongoConfigService } from 'src/services/config/mongo.config.service';
 import { OrderSchema } from 'src/schema/order.schema';
+import { ClientProxyFactory, Transport } from '@nestjs/microservices';
 
 @Module({
   imports: [
@@ -31,20 +32,19 @@ import { OrderSchema } from 'src/schema/order.schema';
     ConfigService,
     WSService,
     OrdersService,
-
-    // {
-    //   provide: 'API_GATEWAY_SUBSCRIBER',
-    //   inject: [ConfigService],
-    //   useFactory: (configService: ConfigService) => {
-    //     return ClientProxyFactory.create({
-    //       transport: Transport.REDIS,
-    //       options: {
-    //         host: configService.get('API_GATEWAY_HOST'),
-    //         port: configService.get('API_GATEWAY_PORT'),
-    //       },
-    //     });
-    //   },
-    // },
+    {
+      provide: 'API_GATEWAY_SUBSCRIBER',
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => {
+        return ClientProxyFactory.create({
+          transport: Transport.REDIS,
+          options: {
+            host: configService.get('API_GATEWAY_HOST'),
+            port: configService.get('API_GATEWAY_PORT'),
+          },
+        });
+      },
+    },
   ],
   exports: [BinanceHttpService],
 })
