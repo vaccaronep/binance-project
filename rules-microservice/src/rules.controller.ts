@@ -55,7 +55,6 @@ export class RulesController {
   @MessagePattern({ cmd: 'rules_get_all' })
   async getAll(data: IGetAllRulesParams): Promise<IRuleGetResponse> {
     let result: IRuleGetResponse;
-    console.log(data);
     if (data) {
       try {
         const rules = await this.rulesService.getAllRules(

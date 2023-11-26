@@ -1,5 +1,4 @@
 // socket-client.ts
-import { Injectable, OnModuleInit } from '@nestjs/common';
 import * as WebSocket from 'ws';
 import { timer } from 'rxjs';
 import { ConfigService } from '@nestjs/config';
@@ -8,25 +7,28 @@ import { AccountUpdate } from 'src/interfaces/stream/account.update.interface';
 import { RedisService } from 'src/services/redis.service';
 // import { OrderUpdate } from 'src/interfaces/stream/order.update.interface';
 
-@Injectable()
-export class WSService implements OnModuleInit {
+export class WSService {
   private ws: WebSocket;
   private isConnect = false;
   private listenKey: string = '';
-  private apiKey: string;
+  private withoutReconnect: boolean = false;
+  // private apiKey: string;
 
   constructor(
     private configService: ConfigService,
     private http: BinanceHttpService,
     private redisClient: RedisService,
-  ) {}
-  onModuleInit() {
-    this.apiKey = this.configService.get('BINANCE_TEST_API_KEY');
-    this.connect();
-    setInterval(
-      () => this.http.refreshListenKey(this.listenKey, this.apiKey),
-      1200000,
-    );
+    private apiKey: string,
+    private secretKey: string,
+    private wsUrl: string,
+    private userId: string,
+  ) {
+    // this.apiKey = this.configService.get('BINANCE_TEST_API_KEY');
+    // setInterval(
+    //   () => this.http.refreshListenKey(this.listenKey, this.apiKey),
+    //   1200000,
+    // );
+    console.log('connected user: ' + userId);
   }
 
   async connect() {
@@ -35,9 +37,7 @@ export class WSService implements OnModuleInit {
       this.listenKey = listenKey;
     }
 
-    this.ws = new WebSocket(
-      `${this.configService.get('BINANCE_WS_TEST_BASE_URL')}/${this.listenKey}`,
-    );
+    this.ws = new WebSocket(`${this.wsUrl}/${this.listenKey}`);
 
     this.ws.on('open', () => {
       this.isConnect = true;
@@ -61,11 +61,13 @@ export class WSService implements OnModuleInit {
 
     this.ws.on('close', (message) => {
       console.log(message);
-      timer(5000).subscribe(() => {
-        this.isConnect = false;
-        this.listenKey = '';
-        this.connect();
-      });
+      if (!this.withoutReconnect) {
+        timer(5000).subscribe(() => {
+          this.isConnect = false;
+          this.listenKey = '';
+          this.connect();
+        });
+      }
     });
 
     this.ws.on('message', (message: any) => {
@@ -76,6 +78,11 @@ export class WSService implements OnModuleInit {
         this.redisClient.publish('account_update', { message });
       }
     });
+  }
+
+  async close(withoutReconnect: boolean) {
+    this.withoutReconnect = withoutReconnect;
+    this.ws.close();
   }
 
   getIsConnect() {

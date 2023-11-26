@@ -19,6 +19,7 @@ import { LogoutUserResponseDto } from './interfaces/users/dto/logout.dto';
 import { IAuthorizedRequest } from './interfaces/common/authorized-request.interface';
 import { IServiceTokenDestroyResponse } from './interfaces/identity/token-destroy.interface';
 import { GetUsersResponseDto } from './interfaces/users/dto/get-all-users.dto';
+import { Permission } from './decorators/permission.decorator';
 
 @Controller('users')
 @ApiTags('users')
@@ -28,6 +29,68 @@ export class UsersController {
     @Inject('IDENTITY_SERVICE')
     private readonly identityServiceClient: ClientProxy,
   ) {}
+
+  @Post('/enableaccount')
+  @Authorization(true)
+  @Permission('user_enable_account')
+  async enableaccount(
+    @Req() request: IAuthorizedRequest,
+  ): Promise<GetUsersResponseDto> {
+    const userId = request.user.id;
+    const userMicroserviceResponse: any = await firstValueFrom(
+      this.userServiceClient.send({ cmd: 'user_enable_account' }, userId),
+    );
+
+    if (userMicroserviceResponse.status !== HttpStatus.OK) {
+      throw new HttpException(
+        {
+          message: userMicroserviceResponse.message,
+          data: null,
+          errors: userMicroserviceResponse.errors,
+        },
+        userMicroserviceResponse.status,
+      );
+    }
+
+    return {
+      message: userMicroserviceResponse.message,
+      data: {
+        users: [userMicroserviceResponse.user],
+      },
+      errors: null,
+    };
+  }
+
+  @Post('/enableorders')
+  @Authorization(true)
+  @Permission('user_enable_order')
+  async enableorders(
+    @Req() request: IAuthorizedRequest,
+  ): Promise<GetUsersResponseDto> {
+    const userId = request.user.id;
+    const userMicroserviceResponse: any = await firstValueFrom(
+      this.userServiceClient.send({ cmd: 'user_enable_order' }, userId),
+    );
+
+    if (userMicroserviceResponse.status !== HttpStatus.OK) {
+      throw new HttpException(
+        {
+          message: userMicroserviceResponse.message,
+          data: null,
+          errors: userMicroserviceResponse.errors,
+        },
+        userMicroserviceResponse.status,
+      );
+    }
+
+    return {
+      message: userMicroserviceResponse.message,
+      data: {
+        users: [userMicroserviceResponse.user],
+      },
+      errors: null,
+    };
+  }
 
   @Post('/createuser')
   async createuser(@Body() userRequest: CreateUserDto) {
@@ -67,6 +130,7 @@ export class UsersController {
 
   @Get('/all')
   @Authorization(true)
+  @Permission('users_get_all')
   @ApiOkResponse({
     type: GetUsersResponseDto,
     description: 'List of users for signed in user',
@@ -75,8 +139,6 @@ export class UsersController {
     const userMicroserviceResponse: any = await firstValueFrom(
       this.userServiceClient.send({ cmd: 'users_get_all' }, {}),
     );
-
-    console.log(userMicroserviceResponse);
 
     return {
       message: userMicroserviceResponse.message,
@@ -171,6 +233,23 @@ export class UsersController {
     const userMicroserviceResponse: any = await firstValueFrom(
       this.userServiceClient.send(
         { cmd: 'user_deactivate' },
+        {
+          id,
+        },
+      ),
+    );
+    return {
+      response: userMicroserviceResponse,
+    };
+  }
+
+  @Put('/confirm')
+  @Authorization(true)
+  async confirm(@Req() request: IAuthorizedRequest) {
+    const id = request.user.id;
+    const userMicroserviceResponse: any = await firstValueFrom(
+      this.userServiceClient.send(
+        { cmd: 'user_confirm' },
         {
           id,
         },

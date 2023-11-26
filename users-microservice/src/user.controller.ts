@@ -12,6 +12,88 @@ import { IUserCreateResponse } from './interfaces/user-create-response.interface
 export class AppController {
   constructor(private readonly userService: UserService) {}
 
+  @MessagePattern({ cmd: 'user_enable_account' })
+  public async enableAccountWsToUser(
+    userId: string,
+  ): Promise<IUserGetResponse> {
+    let result: IUserGetResponse;
+    if (userId) {
+      try {
+        const user = await this.userService.searchUserById(userId);
+        if (!user) {
+          result = {
+            status: HttpStatus.NOT_FOUND,
+            message: 'user_enable_account_user_not_found',
+            user: null,
+            errors: null,
+          };
+        }
+        const updatedUser = await this.userService.enableAccount(user);
+        result = {
+          status: HttpStatus.OK,
+          message: 'user_enable_account_user_success',
+          user: updatedUser,
+          errors: null,
+        };
+      } catch (e) {
+        console.log(e);
+        result = {
+          status: HttpStatus.PRECONDITION_FAILED,
+          message: 'user_create_precondition_failed',
+          user: null,
+          errors: e.errors,
+        };
+      }
+    } else {
+      result = {
+        status: HttpStatus.BAD_REQUEST,
+        message: 'user_enable_account',
+        user: null,
+        errors: null,
+      };
+    }
+    return result;
+  }
+  @MessagePattern({ cmd: 'user_enable_order' })
+  public async enableOrderWsToUser(userId: string): Promise<IUserGetResponse> {
+    let result: IUserGetResponse;
+    if (userId) {
+      try {
+        const user = await this.userService.searchUserById(userId);
+        if (!user) {
+          result = {
+            status: HttpStatus.NOT_FOUND,
+            message: 'user_enable_order_user_not_found',
+            user: null,
+            errors: null,
+          };
+        }
+        const updatedUser = await this.userService.enableOrder(user);
+        result = {
+          status: HttpStatus.OK,
+          message: 'user_enable_order_success',
+          user: updatedUser,
+          errors: null,
+        };
+      } catch (e) {
+        result = {
+          status: HttpStatus.PRECONDITION_FAILED,
+          message: 'user_enable_order_failed',
+          user: null,
+          errors: e.errors,
+        };
+      }
+    } else {
+      result = {
+        status: HttpStatus.BAD_REQUEST,
+        message: 'user_enable_order',
+        user: null,
+        errors: null,
+      };
+    }
+    return result;
+  }
+
   @MessagePattern({ cmd: 'user_create' })
   public async createUser(userParams: IUser): Promise<IUserCreateResponse> {
     let result: IUserCreateResponse;
@@ -35,8 +117,7 @@ export class AppController {
         };
       } else {
         try {
-          userParams.is_confirmed = false;
-          userParams.is_active = true;
+          userParams.is_active = false;
           const createdUser = await this.userService.createUser(userParams);
           delete createdUser.password;
           result = {
@@ -182,6 +263,40 @@ export class AppController {
       return {
         status: HttpStatus.BAD_REQUEST,
         message: 'user_deactivate_bad_request',
+        user: null,
+      };
+    }
+  }
+
+  @MessagePattern({ cmd: 'user_confirm' })
+  public async confirmUser(userId: string) {
+    if (userId) {
+      const user = await this.userService.confirmUser(userId);
+      if (user) {
+        if (user.is_confirmed) {
+          return {
+            status: HttpStatus.BAD_REQUEST,
+            message: 'user_confirm_user_already_confirmed',
+            user: null,
+          };
+        } else {
+          return {
+            status: HttpStatus.OK,
+            message: 'user_confirm_success',
+            user,
+          };
+        }
+      } else {
+        return {
+          status: HttpStatus.NOT_FOUND,
+          message: 'user_confirm_not_found',
+          user: null,
+        };
+      }
+    } else {
+      return {
+        status: HttpStatus.BAD_REQUEST,
+        message: 'user_confirm_bad_request',
         user: null,
       };
     }

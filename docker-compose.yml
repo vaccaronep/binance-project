@@ -37,6 +37,7 @@ services:
       - backend
     depends_on:
       - redis
+      - dbconfigs
   rules:
     container_name: "rules-api"
     build: ./rules-microservice
@@ -71,6 +72,15 @@ services:
       - backend
     links:
       - dbaccount
+  permissions:
+    container_name: "permissions-api"
+    build: ./permissions-microservice
+    restart: always
+    hostname: identity
+    env_file:
+      - ./permissions-microservice/.env
+    networks:
+      - backend
   dbusers:
     container_name: db-users
     image: 'mongo:3.7'
@@ -126,6 +136,25 @@ services:
       - "./db-orders/init/:/docker-entrypoint-initdb.d/"
     ports:
       - 27018:27017
+    networks:
+      - backend
+  dbconfigs:
+    image: 'mongo:3.7'
+    container_name: db-configs
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: adminpw
+      MONGO_INITDB_DATABASE: dbconfigs
+      MONGO_USER: u1
+      MONGO_PASSWORD: somepw
+    env_file:
+      - ./account-microservice/.env
+    volumes:
+      - "./db-configs/data/db-files:/data/db"
+      - "./db-configs/init/:/docker-entrypoint-initdb.d/"
+    ports:
+      - 27021:27017
     networks:
       - backend
   dbaccount:
