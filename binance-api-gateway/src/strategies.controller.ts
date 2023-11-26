@@ -16,6 +16,7 @@ import { firstValueFrom } from 'rxjs';
 import { Authorization } from './decorators/auth.decorator';
 import { CreateStrategyDto } from './interfaces/strategies/create.strategy.dto';
 import { IAuthorizedRequest } from './interfaces/common/authorized-request.interface';
+import { Permission } from './decorators/permission.decorator';
 
 @Controller('strategies')
 @ApiTags('strategies')
@@ -26,6 +27,7 @@ export class StrategiesController {
 
   @Post()
   @Authorization(true)
+  @Permission('strategy_create')
   async createStrategy(
     @Req() request: IAuthorizedRequest,
     @Body() strategyRequest: CreateStrategyDto,
@@ -59,6 +61,7 @@ export class StrategiesController {
 
   @Get('/all')
   @Authorization(true)
+  @Permission('strategy_get_all')
   async getAllStrategies(@Query('name') name?: string) {
     const strategyMicroServiceResponse: any = await firstValueFrom(
       this.rulesMicroService.send({ cmd: 'strategy_get_all' }, { name }),
@@ -85,6 +88,8 @@ export class StrategiesController {
   }
 
   @Get()
+  @Authorization(true)
+  @Permission('strategy_get_by_id')
   async getStrategyByid(@Query('id') id: string) {
     const strategyMicroServiceResponse: any = await firstValueFrom(
       this.rulesMicroService.send({ cmd: 'strategy_get_by_id' }, { id }),
@@ -109,6 +114,8 @@ export class StrategiesController {
   }
 
   @Patch()
+  @Authorization(true)
+  @Permission('strategy_deactivate')
   async deactivateStrategy(@Query('id') strategyId: string) {
     const strategyMicroServiceResponse: any = await firstValueFrom(
       this.rulesMicroService.send(

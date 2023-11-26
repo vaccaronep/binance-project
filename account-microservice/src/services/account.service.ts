@@ -1,10 +1,11 @@
-import { Injectable } from '@nestjs/common';
-import { BinanceHttpService } from '../binance/binance.http.service';
+import { Inject, Injectable, forwardRef } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { BinanceHttpService } from 'src/binance/binance.http.service';
 
 @Injectable()
 export class AccountService {
   constructor(
+    @Inject(forwardRef(() => BinanceHttpService))
     private readonly binanceHttpService: BinanceHttpService,
     private readonly configService: ConfigService,
   ) {}

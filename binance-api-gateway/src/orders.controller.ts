@@ -12,6 +12,7 @@ import { ApiTags } from '@nestjs/swagger';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
 import { Authorization } from './decorators/auth.decorator';
+import { Permission } from './decorators/permission.decorator';
 
 @Controller('orders')
 @ApiTags('orders')
@@ -22,6 +23,7 @@ export class OrdersController {
 
   @Get('/all')
   @Authorization(true)
+  @Permission('orders_get_all')
   async findAll(
     @Query('limit') limit?: string,
     @Query('symbol') symbol?: string,
@@ -54,6 +56,7 @@ export class OrdersController {
 
   @Post('/new_order')
   @Authorization(true)
+  @Permission('order_new')
   async createOrder(
     @Body()
     data: {

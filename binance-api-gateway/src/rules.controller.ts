@@ -16,6 +16,7 @@ import { firstValueFrom } from 'rxjs';
 import { CreateRuleDto } from 'src/interfaces/rules/create.rule.dto';
 import { Authorization } from './decorators/auth.decorator';
 import { IAuthorizedRequest } from './interfaces/common/authorized-request.interface';
+import { Permission } from './decorators/permission.decorator';
 
 @Controller('rules')
 @ApiTags('rules')
@@ -26,6 +27,7 @@ export class RulesController {
 
   @Post()
   @Authorization(true)
+  @Permission('rule_create')
   async createrule(
     @Req() request: IAuthorizedRequest,
     @Body() ruleRequest: CreateRuleDto,
@@ -59,14 +61,16 @@ export class RulesController {
 
   @Get('/all')
   @Authorization(true)
+  @Permission('rules_get_all')
   async getallrules(
-    @Query('userId') userId?: string,
+    @Req() request: IAuthorizedRequest,
     @Query('ruleId') ruleId?: string,
     @Query('ticker') ticker?: string,
     @Query('strategyId') strategyId?: string,
     @Query('is_future') is_future?: boolean,
     @Query('is_active') is_active?: boolean,
   ) {
+    const userId = request.user.id;
     const rulesMicroServiceResponse: any = await firstValueFrom(
       this.rulesMicroService.send(
         { cmd: 'rules_get_all' },
@@ -95,6 +99,8 @@ export class RulesController {
   }
 
   @Get()
+  @Authorization(true)
+  @Permission('rules_get_all')
   async getrulebyid(@Query('id') id: string) {
     const rulesMicroServiceResponse: any = await firstValueFrom(
       this.rulesMicroService.send({ cmd: 'rule_get_by_id' }, { id }),
@@ -119,6 +125,8 @@ export class RulesController {
   }
 
   @Patch()
+  @Authorization(true)
+  @Permission('rule_deactivate')
   async patchRule(@Query('id') ruleId: string) {
     const rulesMicroServiceResponse: any = await firstValueFrom(
       this.rulesMicroService.send({ cmd: 'rule_deactivate' }, { ruleId }),

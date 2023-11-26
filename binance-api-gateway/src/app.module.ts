@@ -88,13 +88,26 @@ import { AccountController } from './account.controller';
       },
     },
     {
+      provide: 'PERMISSION_SERVICE',
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => {
+        return ClientProxyFactory.create({
+          transport: Transport.TCP,
+          options: {
+            host: configService.get('PERMISSION_SERVICE_HOST'),
+            port: configService.get('PERMISSION_SERVICE_PORT'),
+          },
+        });
+      },
+    },
+    {
       provide: APP_GUARD,
       useClass: AuthGuard,
     },
-    // {
-    //   provide: APP_GUARD,
-    //   useClass: PermissionGuard,
-    // },
+    {
+      provide: APP_GUARD,
+      useClass: PermissionGuard,
+    },
   ],
 })
 export class AppModule {}
