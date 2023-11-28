@@ -77,17 +77,29 @@ export class UserService {
       .exec();
   }
 
-  public async searchUser(params: { email: string }): Promise<IUser[]> {
-    const rgx = (pattern) => new RegExp(`.*${pattern}.*`);
-    const searchRgx = rgx(params.email || '');
+  public async searchUser(params: {
+    email?: string;
+    is_active?: boolean;
+    is_confirmed?: boolean;
+    account_activated?: boolean;
+  }): Promise<IUser[]> {
+    const conditions = [];
 
-    return this.userModel.find({
-      $or: [
-        {
-          email: { $exists: true, $ne: null, $regex: searchRgx, $options: 'i' },
-        },
-      ],
-    });
+    if (params.email) {
+      const rgx = (pattern) => new RegExp(`.*${pattern}.*`);
+      const searchRgx = rgx(params.email || '');
+      conditions.push({
+        email: { $exists: true, $ne: null, $regex: searchRgx, $options: 'i' },
+      });
+    }
+
+    if (params.is_active) conditions.push({ is_active: params.is_active });
+    if (params.is_confirmed)
+      conditions.push({ is_confirmed: params.is_confirmed });
+    if (params.account_activated)
+      conditions.push({ account_activated: params.account_activated });
+
+    return this.userModel.find({ $and: conditions }).exec();
   }
 
   public async createUser(user: IUser): Promise<IUser> {

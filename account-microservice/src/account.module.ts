@@ -7,6 +7,7 @@ import { MongoConfigService } from './services/config/mongo.config.service';
 import { ConfigSchema } from './schema/config.schema';
 import { BinanceModule } from './binance/binance.module';
 import { DbService } from './services/db.service';
+import { ClientProxyFactory, Transport } from '@nestjs/microservices';
 
 @Module({
   imports: [
@@ -24,6 +25,23 @@ import { DbService } from './services/db.service';
     ]),
   ],
   controllers: [AccountController],
-  providers: [AccountService, ConfigService, DbService],
+  providers: [
+    AccountService,
+    ConfigService,
+    DbService,
+    {
+      provide: 'USERS_SERVICE',
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => {
+        return ClientProxyFactory.create({
+          transport: Transport.TCP,
+          options: {
+            host: configService.get('USERS_SERVICE_HOST'),
+            port: configService.get('USERS_SERVICE_PORT'),
+          },
+        });
+      },
+    },
+  ],
 })
 export class AccountModule {}

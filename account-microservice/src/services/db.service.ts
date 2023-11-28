@@ -19,7 +19,15 @@ export class DbService {
     return this.configModel.find({ is_active: true }).exec();
   }
 
-  async getAccountKeysByUser(userId: string): Promise<IConfig> {
-    return this.configModel.findOne({ userId }).exec();
+  async getAccountKeysByUser(data: {
+    userId: string;
+    is_active?: boolean;
+  }): Promise<IConfig[]> {
+    let conditions = {};
+    conditions = { userId: data.userId };
+    if (data.is_active) {
+      conditions = { ...conditions, is_active: data.is_active };
+    }
+    return this.configModel.find(conditions).exec();
   }
 }
