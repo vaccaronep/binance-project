@@ -7,6 +7,7 @@ import { BinanceWsWrapper } from './binance.ws';
 import { DbService } from 'src/services/db.service';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigSchema } from 'src/schema/config.schema';
+import { ClientProxyFactory, Transport } from '@nestjs/microservices';
 
 @Module({
   imports: [
@@ -21,7 +22,25 @@ import { ConfigSchema } from 'src/schema/config.schema';
       },
     ]),
   ],
-  providers: [BinanceHttpService, ConfigService, BinanceWsWrapper, DbService],
+  providers: [
+    BinanceHttpService,
+    ConfigService,
+    BinanceWsWrapper,
+    DbService,
+    {
+      provide: 'USERS_SERVICE',
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => {
+        return ClientProxyFactory.create({
+          transport: Transport.TCP,
+          options: {
+            host: configService.get('USERS_SERVICE_HOST'),
+            port: configService.get('USERS_SERVICE_PORT'),
+          },
+        });
+      },
+    },
+  ],
   exports: [BinanceHttpService, BinanceWsWrapper],
 })
 export class BinanceModule {}

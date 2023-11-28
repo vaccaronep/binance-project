@@ -1,10 +1,12 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import { WSService } from './binance.ws.client.service';
 import { ConfigService } from '@nestjs/config';
 import { BinanceHttpService } from './binance.http.service';
 import { RedisService } from 'src/services/redis.service';
 import { DbService } from 'src/services/db.service';
 import { IConfig } from 'src/interfaces/config.interface';
+import { ClientProxy } from '@nestjs/microservices';
+import { firstValueFrom } from 'rxjs';
 
 @Injectable()
 export class BinanceWsWrapper implements OnModuleInit {
@@ -14,8 +16,8 @@ export class BinanceWsWrapper implements OnModuleInit {
     private configService: ConfigService,
     private http: BinanceHttpService,
     private redisClient: RedisService,
-    // @Inject(forwardRef(() => AccountService))
     private dbService: DbService,
+    @Inject('USERS_SERVICE') private accountService: ClientProxy,
   ) {}
 
   onModuleInit() {
@@ -23,30 +25,37 @@ export class BinanceWsWrapper implements OnModuleInit {
   }
 
   async initializeWs() {
-    //BASE DE DATOS A OBTENER USUARIOS Y ME TRAIGO LA KEY, SECRET Y SI ES PAPPER TRADING.
-    //POR CADA USER HAGO UN NEW WS_SERVICE
-    //LA KEY DEBERIA SER USER_ID_SPOT/FUTURES_REAL/PAPPER
-    // const accounts = await this.dbService.getAccountKeys();
-    // console.log(accounts);
-    // if (this.configService.get('CONNECT')) {
-    //   const users = [];
-    //   users.forEach((user) => {
-    //     this.webSockets[user.id] = new WSService(
-    //       this.configService,
-    //       this.http,
-    //       this.redisClient,
-    //       '',
-    //       '',
-    //       '',
-    //     );
-    //     this.webSockets[user.id].connect();
-    //   });
-    // }
+    const data = await firstValueFrom(
+      this.accountService.send(
+        { cmd: 'users_get_all' },
+        {
+          is_active: true,
+          is_confirmed: true,
+          account_activated: true,
+        },
+      ),
+    );
+
+    if (data.status === 200) {
+      data.users.map(async (user) => {
+        console.log('activating ws to ->' + user.id);
+        const configs = await this.dbService.getAccountKeysByUser({
+          userId: user.id,
+          is_active: true,
+        });
+        if (configs) {
+          configs.forEach((config) => {
+            this.addWsToDictionary(config);
+          });
+        }
+      });
+    }
   }
 
   private addWsToDictionary(config: IConfig) {
-    if (typeof this.webSockets[config.userId] === 'undefined') {
-      this.webSockets[config.userId] = new WSService(
+    const key = `${config.id}`;
+    if (typeof this.webSockets[key] === 'undefined') {
+      this.webSockets[key] = new WSService(
         this.configService,
         this.http,
         this.redisClient,
@@ -55,20 +64,29 @@ export class BinanceWsWrapper implements OnModuleInit {
         this.configService.get('BINANCE_WS_TEST_BASE_URL'),
         config.userId,
       );
-      this.webSockets[config.userId].connect();
+      this.webSockets[key].connect();
     }
   }
 
   async connectNewWs(userId: string) {
-    const config = await this.dbService.getAccountKeysByUser(userId);
-    console.log(config);
-    if (config) this.addWsToDictionary(config);
+    const configs = await this.dbService.getAccountKeysByUser({
+      userId,
+      is_active: true,
+    });
+    if (configs) {
+      configs.forEach((config) => {
+        this.addWsToDictionary(config);
+      });
+    }
   }
 
   async removeNewWs(userId: string) {
-    if (typeof this.webSockets[userId] !== 'undefined') {
-      this.webSockets[userId].close(true);
-      delete this.webSockets[userId];
-    }
+    const configs = await this.dbService.getAccountKeysByUser({ userId });
+    configs.forEach((config) => {
+      if (typeof this.webSockets[config.id] !== 'undefined') {
+        this.webSockets[config.id].close(true);
+        delete this.webSockets[config.id];
+      }
+    });
   }
 }

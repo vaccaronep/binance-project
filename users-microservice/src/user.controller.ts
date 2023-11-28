@@ -148,10 +148,15 @@ export class AppController {
   }
 
   @MessagePattern({ cmd: 'users_get_all' })
-  public async getAllUsers(): Promise<IUsersGetResponse> {
+  public async getAllUsers(data: {
+    email?: string;
+    is_active?: boolean;
+    is_confirmed?: boolean;
+    account_activated: boolean;
+  }): Promise<IUsersGetResponse> {
     let result: IUsersGetResponse;
     try {
-      const users = await this.userService.searchUser({ email: '' });
+      const users = await this.userService.searchUser(data);
       // eslint-disable-next-line prefer-const
       result = {
         status: HttpStatus.OK,
