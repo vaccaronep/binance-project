@@ -6,18 +6,19 @@ export interface IRulesSchema extends mongoose.Document {
   ticker: string;
   is_active: boolean;
   is_future: boolean;
-  strategyId: string;
+  strategyId: number;
   quantity_trade: number;
   pyramiding: number;
+  actual_trade: number;
   actions: IActionSchema[];
   created_by: string;
-  params: string;
+  params?: string;
 }
 
 export const RuleSchema = new mongoose.Schema<IRulesSchema>(
   {
     strategyId: {
-      type: String,
+      type: Number,
       required: [true, 'StrategyId can not be empty'],
     },
     is_future: {
@@ -40,11 +41,15 @@ export const RuleSchema = new mongoose.Schema<IRulesSchema>(
     },
     params: {
       type: String,
-      required: [true, 'Params can not be empty'],
+      required: [false, 'Params can not be empty'],
     },
     quantity_trade: {
       type: Number,
       required: [true, 'Quantity per trade can not be empty'],
+    },
+    actual_trade: {
+      type: Number,
+      default: 0,
     },
     pyramiding: {
       type: Number,

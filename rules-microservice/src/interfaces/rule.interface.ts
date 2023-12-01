@@ -6,10 +6,11 @@ export interface IRule extends Document {
   ticker: string;
   is_active: boolean;
   is_future: boolean;
-  strategyId: string; //tv_id en strategy
+  strategyId: number; //tv_id en strategy
   quantity_trade: number;
   pyramiding: number;
   actions: IAction[];
+  actual_trade: number;
   created_by: string;
 }
 
