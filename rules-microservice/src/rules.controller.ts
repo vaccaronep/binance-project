@@ -41,9 +41,10 @@ export class RulesController {
         errors: null,
       };
     } catch (error) {
+      console.log(error);
       result = {
         status: HttpStatus.PRECONDITION_FAILED,
-        message: 'user_create_precondition_failed',
+        message: 'rule_create_precondition_failed',
         rule: null,
         errors: error.errors,
       };

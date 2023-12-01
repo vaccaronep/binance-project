@@ -2,12 +2,14 @@ import { Injectable } from '@nestjs/common';
 import { IAction, IRule } from '../interfaces/rule.interface';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
+import { PythonAnyWhereHttp } from './pythonaw.http.service';
 
 @Injectable()
 export class RulesService {
   constructor(
     @InjectModel('Rule') private readonly ruleModel: Model<IRule>,
     @InjectModel('Action') private readonly actionModel: Model<IAction>,
+    private readonly pythonHttpService: PythonAnyWhereHttp,
   ) {}
 
   async getAllRules(
@@ -62,7 +64,18 @@ export class RulesService {
       }),
     );
 
-    return ruleModel.save();
+    await ruleModel.save();
+
+    this.pythonHttpService.updateConfiguration(
+      rule.ticker,
+      rule.strategyId,
+      rule.is_future ? 'FUTURES' : 'SPOT',
+      rule.pyramiding,
+      rule.quantity_trade,
+      rule.actual_trade,
+    );
+
+    return ruleModel;
   }
 
   async getRuleById(ruleId: string): Promise<IRule> {

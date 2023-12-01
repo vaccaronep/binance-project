@@ -124,6 +124,18 @@ export class RulesController {
     };
   }
 
+  @Get('/python/config')
+  @Authorization(true)
+  async getPythonAnywhereConfig() {
+    const rulesMicroServiceResponse: any = await firstValueFrom(
+      this.rulesMicroService.send({ cmd: 'pyton_get_config' }, {}),
+    );
+
+    return {
+      rulesMicroServiceResponse,
+    };
+  }
+
   @Patch()
   @Authorization(true)
   @Permission('rule_deactivate')
