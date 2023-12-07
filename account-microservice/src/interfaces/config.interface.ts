@@ -7,4 +7,6 @@ export interface IConfig extends Document {
   is_active: boolean;
   api_key: string;
   api_secret: string;
+  api_url: string;
+  ws_url: string;
 }

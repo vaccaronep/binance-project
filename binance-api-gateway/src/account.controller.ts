@@ -77,6 +77,8 @@ export class AccountController {
       is_active: boolean;
       api_key: string;
       api_secret: string;
+      api_url: string;
+      ws_url: string;
     },
   ): Promise<any> {
     const userInfo = request.user;

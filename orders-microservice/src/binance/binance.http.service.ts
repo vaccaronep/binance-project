@@ -29,11 +29,36 @@ export class BinanceHttpService {
     );
   }
 
-  async placeNewOrder(apikey: string, secret: string, params: any) {
+  async placeNewOrder(
+    baseUrl: string,
+    apikey: string,
+    secret: string,
+    params: any,
+  ) {
     const data = await firstValueFrom(
       await this._privateRequest(
+        baseUrl,
         'POST',
         '/api/v3/order',
+        apikey,
+        secret,
+        params,
+      ),
+    );
+    return data;
+  }
+
+  async placeNewOcoOrder(
+    baseUrl: string,
+    apikey: string,
+    secret: string,
+    params: any,
+  ) {
+    const data = await firstValueFrom(
+      await this._privateRequest(
+        baseUrl,
+        'POST',
+        '/api/v3/order/oco',
         apikey,
         secret,
         params,
@@ -75,6 +100,7 @@ export class BinanceHttpService {
   }
 
   private async _privateRequest(
+    baseUrl: string,
     method: string,
     path: string,
     apiKey: string,
@@ -87,7 +113,7 @@ export class BinanceHttpService {
     try {
       const res = this.http.request({
         method,
-        baseURL: this.configService.get('BINANCE_API_TEST_BASE_URL'),
+        baseURL: baseUrl,
         url: `${path}?${queryString}&signature=${signature}`,
         headers: {
           'Content-Type': 'application/json',
@@ -96,6 +122,7 @@ export class BinanceHttpService {
           'X-MBX-APIKEY': apiKey,
         },
       });
+      console.log(res);
       return res;
     } catch (error) {
       console.log(error);

@@ -9,6 +9,7 @@ export class UserService {
   constructor(
     @InjectModel('User') private readonly userModel: Model<IUser>,
     @Inject('ACCOUNT_SERVICE') private readonly accountClient: ClientProxy,
+    @Inject('ORDERS_SERVICE') private readonly ordersClient: ClientProxy,
   ) {}
 
   public async enableAccount(user: IUser): Promise<IUser> {
@@ -43,15 +44,33 @@ export class UserService {
   }
 
   public async enableOrder(user: IUser): Promise<IUser> {
-    return this.userModel
-      .findByIdAndUpdate(
-        user._id,
-        {
-          orders_activated: !user.orders_activated,
-        },
-        { new: true },
-      )
-      .exec();
+    try {
+      const userModel = await this.userModel
+        .findByIdAndUpdate(
+          user._id,
+          {
+            orders_activated: !user.orders_activated,
+          },
+          { new: true },
+        )
+        .exec();
+
+      if (userModel.orders_activated) {
+        this.ordersClient.emit(
+          { cmd: 'order_add_ws_user' },
+          { userId: user._id },
+        );
+      } else {
+        this.ordersClient.emit(
+          { cmd: 'order_remove_ws_user' },
+          { userId: user._id },
+        );
+      }
+
+      return userModel;
+    } catch (error) {
+      return null;
+    }
   }
   public async deactivateUser(userId: string): Promise<IUser> {
     const user: IUser = await this.searchUserById(userId);
@@ -82,6 +101,7 @@ export class UserService {
     is_active?: boolean;
     is_confirmed?: boolean;
     account_activated?: boolean;
+    orders_activated?: boolean;
   }): Promise<IUser[]> {
     const conditions = [];
 
@@ -98,6 +118,8 @@ export class UserService {
       conditions.push({ is_confirmed: params.is_confirmed });
     if (params.account_activated)
       conditions.push({ account_activated: params.account_activated });
+    if (params.orders_activated)
+      conditions.push({ orders_activated: params.orders_activated });
 
     return this.userModel.find({ $and: conditions }).exec();
   }

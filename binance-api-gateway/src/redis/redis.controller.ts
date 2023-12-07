@@ -16,8 +16,9 @@ export class RedisController {
   }
 
   @EventPattern('order_update')
-  orderUpdate(message: string) {
-    this.gateway.newMessage(message);
+  orderUpdate(data: { message: string; configId: string }) {
+    console.log(data.message);
+    this.gateway.newMessage(data.message, data.configId);
   }
 
   @EventPattern('account_update')

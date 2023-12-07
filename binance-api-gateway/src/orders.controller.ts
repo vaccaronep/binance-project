@@ -7,12 +7,14 @@ import {
   Inject,
   Post,
   Query,
+  Req,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
 import { Authorization } from './decorators/auth.decorator';
 import { Permission } from './decorators/permission.decorator';
+import { IAuthorizedRequest } from './interfaces/common/authorized-request.interface';
 
 @Controller('orders')
 @ApiTags('orders')
@@ -65,10 +67,17 @@ export class OrdersController {
       side: string;
       type: string;
       strategy: string;
+      market: string;
+      testing: boolean;
     },
+    @Req() request: IAuthorizedRequest,
   ) {
+    const userId = request.user.id;
     const ordersMicroserviceResponse: any = await firstValueFrom(
-      this.ordersMicroService.send({ cmd: 'order_new' }, data),
+      this.ordersMicroService.send(
+        { cmd: 'order_new' },
+        { order: data, userId },
+      ),
     );
     return {
       response: ordersMicroserviceResponse,

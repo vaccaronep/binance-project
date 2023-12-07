@@ -29,6 +29,15 @@ export class AccountController {
     return this.dbService.setAccountKeys(data.userId, data.config);
   }
 
+  @MessagePattern({ cmd: 'account_get_keys' })
+  async getAccountKeys(data: { userId: string }) {
+    console.log(data.userId);
+    return this.dbService.getAccountKeysByUser({
+      userId: data.userId,
+      is_active: true,
+    });
+  }
+
   @MessagePattern({ cmd: 'account_add_ws_user' })
   async addUserToWs(data: { userId: string }) {
     console.log('recibiendo mensaje:' + data.userId);

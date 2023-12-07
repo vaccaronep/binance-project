@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { WSService } from './binance.ws.client.service';
 // import { ClientProxyFactory, Transport } from '@nestjs/microservices';
 import { BinanceHttpService } from './binance.http.service';
 import { HttpModule } from '@nestjs/axios';
@@ -10,10 +9,11 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { MongoConfigService } from 'src/services/config/mongo.config.service';
 import { OrderSchema } from 'src/schema/order.schema';
 import { ClientProxyFactory, Transport } from '@nestjs/microservices';
+import { BinanceWsWrapper } from './binance.ws';
 
 @Module({
   imports: [
-    ConfigModule.forRoot(),
+    ConfigModule,
     HttpModule,
     RedisModule,
     MongooseModule.forRootAsync({
@@ -29,8 +29,8 @@ import { ClientProxyFactory, Transport } from '@nestjs/microservices';
   ],
   providers: [
     BinanceHttpService,
+    BinanceWsWrapper,
     ConfigService,
-    WSService,
     OrdersService,
     {
       provide: 'API_GATEWAY_SUBSCRIBER',
@@ -45,7 +45,46 @@ import { ClientProxyFactory, Transport } from '@nestjs/microservices';
         });
       },
     },
+    {
+      provide: 'USERS_SERVICE',
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => {
+        return ClientProxyFactory.create({
+          transport: Transport.TCP,
+          options: {
+            host: configService.get('USERS_SERVICE_HOST'),
+            port: configService.get('USERS_SERVICE_PORT'),
+          },
+        });
+      },
+    },
+    {
+      provide: 'ACCOUNT_SERVICE',
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => {
+        return ClientProxyFactory.create({
+          transport: Transport.TCP,
+          options: {
+            host: configService.get('ACCOUNT_SERVICE_HOST'),
+            port: configService.get('ACCOUNT_SERVICE_PORT'),
+          },
+        });
+      },
+    },
+    {
+      provide: 'RULES_SERVICE',
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => {
+        return ClientProxyFactory.create({
+          transport: Transport.TCP,
+          options: {
+            host: configService.get('RULES_SERVICE_HOST'),
+            port: configService.get('RULES_SERVICE_PORT'),
+          },
+        });
+      },
+    },
   ],
-  exports: [BinanceHttpService],
+  exports: [BinanceHttpService, BinanceWsWrapper],
 })
 export class BinanceModule {}

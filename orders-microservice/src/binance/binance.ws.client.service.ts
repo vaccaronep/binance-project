@@ -1,45 +1,50 @@
-// socket-client.ts
-import { Injectable, OnModuleInit } from '@nestjs/common';
 import * as WebSocket from 'ws';
-import { timer } from 'rxjs';
-import { ConfigService } from '@nestjs/config';
+import { firstValueFrom, timer } from 'rxjs';
 import { BinanceHttpService } from './binance.http.service';
 import { OrderUpdate } from 'src/interfaces/stream/order.update.interface';
 import { RedisService } from 'src/services/redis.service';
 import { OrdersService } from 'src/services/orders.service';
+import { ClientProxy } from '@nestjs/microservices';
 // import { OrderUpdate } from 'src/interfaces/stream/order.update.interface';
 
-@Injectable()
-export class WSService implements OnModuleInit {
+export class WSService {
   private ws: WebSocket;
   private isConnect = false;
   private listenKey: string = '';
-  private apiKey: string;
+  private withoutReconnect: boolean = false;
+  private api_key: string;
+  private api_secret: string;
+  private ws_url: string;
+  private userId: string;
+  private is_futures: boolean;
 
   constructor(
-    private configService: ConfigService,
     private http: BinanceHttpService,
     private redisClient: RedisService,
+    private config: any, //TODO: tipear el config
     private orderClient: OrdersService,
-  ) {}
-  onModuleInit() {
-    this.apiKey = this.configService.get('BINANCE_TEST_API_KEY');
-    this.connect();
-    setInterval(
-      () => this.http.refreshListenKey(this.listenKey, this.apiKey),
-      1200000,
-    );
+    private rulesService: ClientProxy,
+  ) {
+    console.log('connected user: ' + config.userId);
+    this.api_key = this.config.api_key;
+    this.api_secret = this.config.api_secret;
+    this.ws_url = this.config.ws_url;
+    this.userId = this.config.userId;
+    this.is_futures = this.config.is_futures;
   }
 
   async connect() {
     if (!this.listenKey) {
-      const listenKey = await this.http.getLisnetKey(this.apiKey);
+      const listenKey = await this.http.getLisnetKey(this.api_key);
       this.listenKey = listenKey;
     }
 
-    this.ws = new WebSocket(
-      `${this.configService.get('BINANCE_WS_TEST_BASE_URL')}/${this.listenKey}`,
-    );
+    // setInterval(
+    //   () => this.http.refreshListenKey(this.listenKey, this.apiKey),
+    //   1200000,
+    // );
+
+    this.ws = new WebSocket(`${this.ws_url}/${this.listenKey}`);
 
     this.ws.on('open', () => {
       this.isConnect = true;
@@ -63,23 +68,58 @@ export class WSService implements OnModuleInit {
 
     this.ws.on('close', (message) => {
       console.log(message);
-      timer(5000).subscribe(() => {
-        this.isConnect = false;
-        this.listenKey = '';
-        this.connect();
-      });
+      if (!this.withoutReconnect) {
+        timer(5000).subscribe(() => {
+          this.isConnect = false;
+          this.listenKey = '';
+          this.connect();
+        });
+      }
     });
 
     this.ws.on('message', async (message: any) => {
       const binanceMessage: OrderUpdate = JSON.parse(message.toString());
       if (binanceMessage.e === 'executionReport') {
-        //analizar si tenemos que hacer el SL y el TP
         const savedObject = await this.orderClient.saveOrder(binanceMessage);
+
+        if (
+          savedObject.currentOrderStatus === 'FILLED' &&
+          savedObject.orderType === 'MARKET'
+        ) {
+          const rulesResponse = await firstValueFrom(
+            this.rulesService.send(
+              { cmd: 'rules_get_all' },
+              {
+                ticker: savedObject.symbol,
+                userId: this.config.userId,
+                is_active: true,
+                strategyId: savedObject.strategyId,
+                is_futures: this.config.is_futures,
+              },
+            ),
+          );
+
+          if (rulesResponse.status === 200) {
+            const rules = rulesResponse.rules;
+            if (rules)
+              this.orderClient.placeStopLossAndTakeProfit(
+                this.config,
+                rules[0],
+                savedObject,
+              );
+          }
+        }
+
         this.redisClient.publish('order_update', {
           message: JSON.stringify(savedObject),
         });
       }
     });
+  }
+
+  close(withoutReconnect: boolean) {
+    this.withoutReconnect = withoutReconnect;
+    this.ws.close();
   }
 
   getIsConnect() {

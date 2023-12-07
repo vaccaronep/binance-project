@@ -2,6 +2,7 @@ import { Controller, HttpStatus } from '@nestjs/common';
 import { OrdersService } from './services/orders.service';
 import { MessagePattern } from '@nestjs/microservices';
 import { IOrdersGetResponse } from './interfaces/api/get-orders-response.interface';
+import { BinanceWsWrapper } from './binance/binance.ws';
 
 export interface NewOrder {
   symbol: string;
@@ -9,16 +10,33 @@ export interface NewOrder {
   type: string;
   quantity: number;
   strategy: string;
+  market: string;
+  testing: boolean;
 }
 
 @Controller()
 export class OrdersController {
-  constructor(private readonly orderService: OrdersService) {}
+  constructor(
+    private readonly orderService: OrdersService,
+    private readonly wsService: BinanceWsWrapper,
+  ) {}
 
   @MessagePattern({ cmd: 'order_new' })
-  placeOrder(newOrder: NewOrder) {
-    this.orderService.newOrder(newOrder);
+  placeOrder(data: { order: NewOrder; userId: string }) {
+    this.orderService.newOrder(data.order, data.userId);
     return true;
+  }
+
+  @MessagePattern({ cmd: 'order_add_ws_user' })
+  async addUserToWs(data: { userId: string }) {
+    console.log('recibiendo mensaje adicionar:' + data.userId);
+    this.wsService.connectNewWs(data.userId);
+  }
+
+  @MessagePattern({ cmd: 'order_remove_ws_user' })
+  async removeUserToWs(data: { userId: string }) {
+    console.log('recibiendo mensaje remover:' + data.userId);
+    this.wsService.removeNewWs(data.userId);
   }
 
   @MessagePattern({ cmd: 'orders_get_all' })

@@ -7,6 +7,8 @@ export interface IConfigSchema extends mongoose.Document {
   is_futures: boolean;
   api_key: string;
   api_secret: string;
+  api_url: string;
+  ws_url: string;
 }
 
 export const ConfigSchema = new mongoose.Schema<IConfigSchema>({
@@ -36,5 +38,13 @@ export const ConfigSchema = new mongoose.Schema<IConfigSchema>({
   api_secret: {
     type: String,
     required: [true, 'Api Secret can not be empty'],
+  },
+  api_url: {
+    type: String,
+    required: [true, 'Api URL can not be empty'],
+  },
+  ws_url: {
+    type: String,
+    required: [true, 'WebSocket URL can not be empty'],
   },
 });
