@@ -5,8 +5,9 @@ import { RedisModule } from './redis/redis.module';
 import { BinanceModule } from './binance/binance.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { MongoConfigService } from './services/config/mongo.config.service';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { OrderSchema } from './schema/order.schema';
+import { ClientProxyFactory, Transport } from '@nestjs/microservices';
 
 @Module({
   imports: [
@@ -25,6 +26,34 @@ import { OrderSchema } from './schema/order.schema';
     ]),
   ],
   controllers: [OrdersController],
-  providers: [OrdersService],
+  providers: [
+    OrdersService,
+    {
+      provide: 'USERS_SERVICE',
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => {
+        return ClientProxyFactory.create({
+          transport: Transport.TCP,
+          options: {
+            host: configService.get('USERS_SERVICE_HOST'),
+            port: configService.get('USERS_SERVICE_PORT'),
+          },
+        });
+      },
+    },
+    {
+      provide: 'ACCOUNT_SERVICE',
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => {
+        return ClientProxyFactory.create({
+          transport: Transport.TCP,
+          options: {
+            host: configService.get('ACCOUNT_SERVICE_HOST'),
+            port: configService.get('ACCOUNT_SERVICE_PORT'),
+          },
+        });
+      },
+    },
+  ],
 })
 export class OrderModule {}

@@ -153,6 +153,7 @@ export class AppController {
     is_active?: boolean;
     is_confirmed?: boolean;
     account_activated: boolean;
+    orders_activated: boolean;
   }): Promise<IUsersGetResponse> {
     let result: IUsersGetResponse;
     try {

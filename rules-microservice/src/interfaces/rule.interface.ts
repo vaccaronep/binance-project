@@ -8,6 +8,7 @@ export interface IRule extends Document {
   is_future: boolean;
   strategyId: number; //tv_id en strategy
   quantity_trade: number;
+  type: string;
   pyramiding: number;
   actions: IAction[];
   actual_trade: number;

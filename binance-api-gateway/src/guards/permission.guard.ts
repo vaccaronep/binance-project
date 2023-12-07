@@ -24,8 +24,6 @@ export class PermissionGuard implements CanActivate {
       context.getHandler(),
     );
 
-    console.log(permission);
-
     if (!permission) {
       return true;
     }
