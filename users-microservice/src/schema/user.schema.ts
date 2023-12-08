@@ -14,8 +14,6 @@ export interface IUserSchema extends mongoose.Document {
   is_confirmed: boolean;
   is_active: boolean;
   wishlist: string[];
-  account_activated: boolean;
-  orders_activated: boolean;
   is_admin: boolean;
   comparePassword: (password: string) => Promise<boolean>;
   getEncryptedPassword: (password: string) => Promise<string>;
@@ -42,14 +40,6 @@ export const UserSchema = new mongoose.Schema<IUserSchema>(
       required: [true, 'Active can not be empty'],
     },
     is_admin: {
-      type: Boolean,
-      default: false,
-    },
-    account_activated: {
-      type: Boolean,
-      default: false,
-    },
-    orders_activated: {
       type: Boolean,
       default: false,
     },

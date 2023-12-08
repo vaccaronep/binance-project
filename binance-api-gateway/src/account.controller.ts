@@ -2,6 +2,8 @@ import {
   Body,
   Controller,
   Get,
+  HttpException,
+  HttpStatus,
   Inject,
   Post,
   Query,
@@ -21,6 +23,76 @@ export class AccountController {
     @Inject('ACCOUNT_SERVICE') private readonly accountClient: ClientProxy,
   ) {}
 
+  @Post('/enableaccount')
+  @Authorization(true)
+  @Permission('user_enable_account')
+  async enableaccount(
+    @Req() request: IAuthorizedRequest,
+    @Query('configId') configId: string,
+  ) {
+    const userId = request.user.id;
+    const accountMicroserviceResponse: any = await firstValueFrom(
+      this.accountClient.send(
+        { cmd: 'config_enable_account' },
+        { userId, configId },
+      ),
+    );
+
+    if (accountMicroserviceResponse.status !== HttpStatus.OK) {
+      throw new HttpException(
+        {
+          message: accountMicroserviceResponse.message,
+          data: null,
+          errors: accountMicroserviceResponse.errors,
+        },
+        accountMicroserviceResponse.status,
+      );
+    }
+
+    return {
+      message: accountMicroserviceResponse.message,
+      data: {
+        configs: accountMicroserviceResponse.configs,
+      },
+      errors: null,
+    };
+  }
+
+  @Post('/enableorders')
+  @Authorization(true)
+  @Permission('user_enable_order')
+  async enableorders(
+    @Req() request: IAuthorizedRequest,
+    @Query('configId') configId: string,
+  ) {
+    const userId = request.user.id;
+    const accountMicroserviceResponse: any = await firstValueFrom(
+      this.accountClient.send(
+        { cmd: 'config_enable_order' },
+        { userId, configId },
+      ),
+    );
+
+    if (accountMicroserviceResponse.status !== HttpStatus.OK) {
+      throw new HttpException(
+        {
+          message: accountMicroserviceResponse.message,
+          data: null,
+          errors: accountMicroserviceResponse.errors,
+        },
+        accountMicroserviceResponse.status,
+      );
+    }
+
+    return {
+      message: accountMicroserviceResponse.message,
+      data: {
+        configs: accountMicroserviceResponse.configs,
+      },
+      errors: null,
+    };
+  }
+
   @Get('')
   @Authorization(true)
   @Permission('account_get')
@@ -38,6 +110,74 @@ export class AccountController {
     return {
       errors: null,
       data: destroyTokenResponse,
+    };
+  }
+
+  @Get('/mine')
+  @Authorization(true)
+  public async configByUser(@Req() request: IAuthorizedRequest): Promise<any> {
+    const userId = request.user.id;
+    const confignResponse: any = await firstValueFrom(
+      this.accountClient.send(
+        { cmd: 'account_get_keys' },
+        {
+          userId: userId,
+        },
+      ),
+    );
+
+    if (confignResponse.status !== HttpStatus.OK) {
+      throw new HttpException(
+        {
+          message: confignResponse.message,
+          data: null,
+          errors: confignResponse.errors,
+        },
+        confignResponse.status,
+      );
+    }
+
+    return {
+      message: confignResponse.message,
+      data: {
+        configs: confignResponse.configs,
+      },
+      errors: null,
+    };
+  }
+
+  @Get('/config')
+  @Authorization(true)
+  public async configById(
+    @Req() request: IAuthorizedRequest,
+    @Query('id') id: string,
+  ): Promise<any> {
+    const confignResponse: any = await firstValueFrom(
+      this.accountClient.send(
+        { cmd: 'account_get_keys_by_id' },
+        {
+          configId: id,
+        },
+      ),
+    );
+
+    if (confignResponse.status !== HttpStatus.OK) {
+      throw new HttpException(
+        {
+          message: confignResponse.message,
+          data: null,
+          errors: confignResponse.errors,
+        },
+        confignResponse.status,
+      );
+    }
+
+    return {
+      message: confignResponse.message,
+      data: {
+        configs: confignResponse.configs,
+      },
+      errors: null,
     };
   }
 

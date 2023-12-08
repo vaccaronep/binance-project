@@ -29,7 +29,6 @@ export class BinanceWsWrapper implements OnModuleInit {
         {
           is_active: true,
           is_confirmed: true,
-          orders_activated: true,
         },
       ),
     );
@@ -37,17 +36,18 @@ export class BinanceWsWrapper implements OnModuleInit {
     if (data.status === 200) {
       data.users.map(async (user) => {
         console.log('activating ws to ->' + user.id);
-        const configs = await firstValueFrom(
+        const apiResponse = await firstValueFrom(
           this.accountService.send(
             { cmd: 'account_get_keys' },
             {
               userId: user.id,
               is_active: true,
+              orders_activated: true,
             },
           ),
         );
-        if (configs) {
-          configs.forEach((config) => {
+        if (apiResponse.status === 200) {
+          apiResponse.configs.forEach((config) => {
             this.addWsToDictionary(config);
           });
         }
@@ -69,38 +69,40 @@ export class BinanceWsWrapper implements OnModuleInit {
     }
   }
 
-  async removeNewWs(userId: string) {
-    const configs = await firstValueFrom(
+  async removeNewWs(configId: string) {
+    const apiResponse = await firstValueFrom(
       this.accountService.send(
-        { cmd: 'account_get_keys' },
+        { cmd: 'account_get_keys_by_id' },
         {
-          userId,
+          configId,
           is_active: true,
         },
       ),
     );
-    configs.forEach((config) => {
+    if (apiResponse.status === 200) {
+      const config = apiResponse.configs[0];
       if (typeof this.webSockets[config.id] !== 'undefined') {
         this.webSockets[config.id].close(true);
         delete this.webSockets[config.id];
       }
-    });
+    }
   }
-  async connectNewWs(userId: string) {
-    console.log('conectando ws:' + userId);
-    const configs = await firstValueFrom(
+  async connectNewWs(configId: string) {
+    console.log('conectando ws:' + configId);
+    const apiResponse = await firstValueFrom(
       this.accountService.send(
-        { cmd: 'account_get_keys' },
+        { cmd: 'account_get_keys_by_id' },
         {
-          userId,
+          configId,
           is_active: true,
         },
       ),
     );
-    if (configs) {
-      configs.forEach((config) => {
+    if (apiResponse.status === 200) {
+      const config = apiResponse.configs[0];
+      if (config) {
         this.addWsToDictionary(config);
-      });
+      }
     }
   }
 }

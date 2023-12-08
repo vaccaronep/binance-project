@@ -30,68 +30,6 @@ export class UsersController {
     private readonly identityServiceClient: ClientProxy,
   ) {}
 
-  @Post('/enableaccount')
-  @Authorization(true)
-  @Permission('user_enable_account')
-  async enableaccount(
-    @Req() request: IAuthorizedRequest,
-  ): Promise<GetUsersResponseDto> {
-    const userId = request.user.id;
-    const userMicroserviceResponse: any = await firstValueFrom(
-      this.userServiceClient.send({ cmd: 'user_enable_account' }, userId),
-    );
-
-    if (userMicroserviceResponse.status !== HttpStatus.OK) {
-      throw new HttpException(
-        {
-          message: userMicroserviceResponse.message,
-          data: null,
-          errors: userMicroserviceResponse.errors,
-        },
-        userMicroserviceResponse.status,
-      );
-    }
-
-    return {
-      message: userMicroserviceResponse.message,
-      data: {
-        users: [userMicroserviceResponse.user],
-      },
-      errors: null,
-    };
-  }
-
-  @Post('/enableorders')
-  @Authorization(true)
-  @Permission('user_enable_order')
-  async enableorders(
-    @Req() request: IAuthorizedRequest,
-  ): Promise<GetUsersResponseDto> {
-    const userId = request.user.id;
-    const userMicroserviceResponse: any = await firstValueFrom(
-      this.userServiceClient.send({ cmd: 'user_enable_order' }, userId),
-    );
-
-    if (userMicroserviceResponse.status !== HttpStatus.OK) {
-      throw new HttpException(
-        {
-          message: userMicroserviceResponse.message,
-          data: null,
-          errors: userMicroserviceResponse.errors,
-        },
-        userMicroserviceResponse.status,
-      );
-    }
-
-    return {
-      message: userMicroserviceResponse.message,
-      data: {
-        users: [userMicroserviceResponse.user],
-      },
-      errors: null,
-    };
-  }
-
   @Post('/createuser')
   async createuser(@Body() userRequest: CreateUserDto) {
     const userMicroserviceResponse: any = await firstValueFrom(

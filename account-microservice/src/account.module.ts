@@ -42,6 +42,19 @@ import { ClientProxyFactory, Transport } from '@nestjs/microservices';
         });
       },
     },
+    {
+      provide: 'ORDERS_SERVICE',
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => {
+        return ClientProxyFactory.create({
+          transport: Transport.TCP,
+          options: {
+            host: configService.get('ORDERS_SERVICE_HOST'),
+            port: configService.get('ORDERS_SERVICE_PORT'),
+          },
+        });
+      },
+    },
   ],
 })
 export class AccountModule {}

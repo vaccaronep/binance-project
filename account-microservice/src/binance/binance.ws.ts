@@ -1,4 +1,4 @@
-import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
+import { Inject, Injectable, OnModuleInit, forwardRef } from '@nestjs/common';
 import { WSService } from './binance.ws.client.service';
 import { ConfigService } from '@nestjs/config';
 import { BinanceHttpService } from './binance.http.service';
@@ -16,6 +16,7 @@ export class BinanceWsWrapper implements OnModuleInit {
     private configService: ConfigService,
     private http: BinanceHttpService,
     private redisClient: RedisService,
+    @Inject(forwardRef(() => DbService))
     private dbService: DbService,
     @Inject('USERS_SERVICE') private accountService: ClientProxy,
   ) {}
@@ -31,7 +32,6 @@ export class BinanceWsWrapper implements OnModuleInit {
         {
           is_active: true,
           is_confirmed: true,
-          account_activated: true,
         },
       ),
     );
@@ -42,6 +42,7 @@ export class BinanceWsWrapper implements OnModuleInit {
         const configs = await this.dbService.getAccountKeysByUser({
           userId: user.id,
           is_active: true,
+          account_activated: true,
         });
         if (configs) {
           configs.forEach((config) => {
@@ -68,25 +69,19 @@ export class BinanceWsWrapper implements OnModuleInit {
     }
   }
 
-  async connectNewWs(userId: string) {
-    const configs = await this.dbService.getAccountKeysByUser({
-      userId,
-      is_active: true,
-    });
-    if (configs) {
-      configs.forEach((config) => {
-        this.addWsToDictionary(config);
-      });
+  async connectNewWs(configId: string) {
+    console.log('adding:' + configId);
+    const config = await this.dbService.searchConfigById(configId);
+    if (config) {
+      this.addWsToDictionary(config);
     }
   }
 
-  async removeNewWs(userId: string) {
-    const configs = await this.dbService.getAccountKeysByUser({ userId });
-    configs.forEach((config) => {
-      if (typeof this.webSockets[config.id] !== 'undefined') {
-        this.webSockets[config.id].close(true);
-        delete this.webSockets[config.id];
-      }
-    });
+  async removeNewWs(configId: string) {
+    const config = await this.dbService.searchConfigById(configId);
+    if (typeof this.webSockets[config.id] !== 'undefined') {
+      this.webSockets[config.id].close(true);
+      delete this.webSockets[config.id];
+    }
   }
 }

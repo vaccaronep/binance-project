@@ -49,11 +49,6 @@ revisar despues de lo que hice abajo para ver como viene.
 
 ------------------------------------------------------------------------------------------------------------
 
-que me faltaria para operar hoy y probar?
-setear reglas.
-poner limites para operar.
-
-
 -poder configurar maximos segun moneda
   -> en el account agregar la opcion de setear maximos para las estrategias (es decir, cantidad de plata por trade y hasta cuantos trades activos).
     {
@@ -70,6 +65,3 @@ poner limites para operar.
   -> configurar para levantar los ws de un dicionary
   -> cargar las rules para generar sl y tp en las rules que son manejadas por el boton (un filtro por user id, ticker, is active y manejadas por el bot).
   -> mismo cuando se hace un sell para el SL o el TP se deberia actualizar en pythonanywhere para saber que pudede empzar a poner orders nuevamente.
-
-
--sincronizar orders de binance con nuestra db (mytrades y dsp insertar en la db las orders ids que no estan).

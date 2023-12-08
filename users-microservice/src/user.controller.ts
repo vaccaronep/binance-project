@@ -12,88 +12,6 @@ import { IUserCreateResponse } from './interfaces/user-create-response.interface
 export class AppController {
   constructor(private readonly userService: UserService) {}
 
-  @MessagePattern({ cmd: 'user_enable_account' })
-  public async enableAccountWsToUser(
-    userId: string,
-  ): Promise<IUserGetResponse> {
-    let result: IUserGetResponse;
-    if (userId) {
-      try {
-        const user = await this.userService.searchUserById(userId);
-        if (!user) {
-          result = {
-            status: HttpStatus.NOT_FOUND,
-            message: 'user_enable_account_user_not_found',
-            user: null,
-            errors: null,
-          };
-        }
-        const updatedUser = await this.userService.enableAccount(user);
-        result = {
-          status: HttpStatus.OK,
-          message: 'user_enable_account_user_success',
-          user: updatedUser,
-          errors: null,
-        };
-      } catch (e) {
-        console.log(e);
-        result = {
-          status: HttpStatus.PRECONDITION_FAILED,
-          message: 'user_create_precondition_failed',
-          user: null,
-          errors: e.errors,
-        };
-      }
-    } else {
-      result = {
-        status: HttpStatus.BAD_REQUEST,
-        message: 'user_enable_account',
-        user: null,
-        errors: null,
-      };
-    }
-    return result;
-  }
-  @MessagePattern({ cmd: 'user_enable_order' })
-  public async enableOrderWsToUser(userId: string): Promise<IUserGetResponse> {
-    let result: IUserGetResponse;
-    if (userId) {
-      try {
-        const user = await this.userService.searchUserById(userId);
-        if (!user) {
-          result = {
-            status: HttpStatus.NOT_FOUND,
-            message: 'user_enable_order_user_not_found',
-            user: null,
-            errors: null,
-          };
-        }
-        const updatedUser = await this.userService.enableOrder(user);
-        result = {
-          status: HttpStatus.OK,
-          message: 'user_enable_order_success',
-          user: updatedUser,
-          errors: null,
-        };
-      } catch (e) {
-        result = {
-          status: HttpStatus.PRECONDITION_FAILED,
-          message: 'user_enable_order_failed',
-          user: null,
-          errors: e.errors,
-        };
-      }
-    } else {
-      result = {
-        status: HttpStatus.BAD_REQUEST,
-        message: 'user_enable_order',
-        user: null,
-        errors: null,
-      };
-    }
-    return result;
-  }
-
   @MessagePattern({ cmd: 'user_create' })
   public async createUser(userParams: IUser): Promise<IUserCreateResponse> {
     let result: IUserCreateResponse;
@@ -152,8 +70,6 @@ export class AppController {
     email?: string;
     is_active?: boolean;
     is_confirmed?: boolean;
-    account_activated: boolean;
-    orders_activated: boolean;
   }): Promise<IUsersGetResponse> {
     let result: IUsersGetResponse;
     try {
