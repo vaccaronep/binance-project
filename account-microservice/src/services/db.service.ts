@@ -14,6 +14,51 @@ export class DbService {
     @Inject('ORDERS_SERVICE') private readonly ordersClient: ClientProxy,
   ) {}
 
+  async disableAccount(config: IConfig): Promise<IConfig> {
+    const accountUpdated = await this.configModel
+      .findByIdAndUpdate(
+        config._id,
+        {
+          is_active: !config.is_active,
+        },
+        { new: true },
+      )
+      .select('-api_key -api_secret')
+      .exec();
+    return accountUpdated;
+  }
+
+  async updateAccount(id: string, config: IConfig): Promise<IConfig> {
+    const accountUpdated = await this.configModel
+      .findByIdAndUpdate(
+        id,
+        {
+          name: config.name,
+          is_papper_trading: config.is_papper_trading,
+          is_futures: config.is_futures,
+          api_key: config.api_key,
+          api_secret: config.api_secret,
+          api_url: config.api_url,
+          ws_url: config.ws_url,
+        },
+        { new: true },
+      )
+      .exec();
+
+    if (accountUpdated.account_activated) {
+      this.wsService.reconnectWs(accountUpdated);
+    }
+
+    if (accountUpdated.orders_activated) {
+      this.ordersClient.emit(
+        { cmd: 'order_reconnect_ws_user' },
+        { configId: accountUpdated._id },
+      );
+    }
+
+    return accountUpdated;
+  }
+
   async setAccountKeys(userId: string, config: IConfig) {
     config.userId = userId;
     const configModel = new this.configModel(config);
@@ -98,12 +143,12 @@ export class DbService {
       if (userModel.orders_activated) {
         this.ordersClient.emit(
           { cmd: 'order_add_ws_user' },
-          { userId: config._id },
+          { configId: config._id },
         );
       } else {
         this.ordersClient.emit(
           { cmd: 'order_remove_ws_user' },
-          { userId: config._id },
+          { configId: config._id },
         );
       }
 

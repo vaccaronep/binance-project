@@ -5,7 +5,6 @@ import { OrderUpdate } from 'src/interfaces/stream/order.update.interface';
 import { RedisService } from 'src/services/redis.service';
 import { OrdersService } from 'src/services/orders.service';
 import { ClientProxy } from '@nestjs/microservices';
-// import { OrderUpdate } from 'src/interfaces/stream/order.update.interface';
 
 export class WSService {
   private ws: WebSocket;
@@ -17,6 +16,7 @@ export class WSService {
   private ws_url: string;
   private userId: string;
   private is_futures: boolean;
+  private interval: any;
 
   constructor(
     private http: BinanceHttpService,
@@ -25,7 +25,6 @@ export class WSService {
     private orderClient: OrdersService,
     private rulesService: ClientProxy,
   ) {
-    console.log('connected user: ' + config.userId);
     this.api_key = this.config.api_key;
     this.api_secret = this.config.api_secret;
     this.ws_url = this.config.ws_url;
@@ -39,10 +38,10 @@ export class WSService {
       this.listenKey = listenKey;
     }
 
-    // setInterval(
-    //   () => this.http.refreshListenKey(this.listenKey, this.apiKey),
-    //   1200000,
-    // );
+    this.interval = setInterval(
+      () => this.http.refreshListenKey(this.listenKey, this.api_key),
+      1200000,
+    );
 
     this.ws = new WebSocket(`${this.ws_url}/${this.listenKey}`);
 
@@ -118,6 +117,7 @@ export class WSService {
   }
 
   close(withoutReconnect: boolean) {
+    clearInterval(this.interval);
     this.withoutReconnect = withoutReconnect;
     this.ws.close();
   }

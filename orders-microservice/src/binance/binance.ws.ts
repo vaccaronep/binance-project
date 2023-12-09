@@ -69,6 +69,26 @@ export class BinanceWsWrapper implements OnModuleInit {
     }
   }
 
+  async reconnectWs(configId: string) {
+    const apiResponse = await firstValueFrom(
+      this.accountService.send(
+        { cmd: 'account_get_keys_by_id' },
+        {
+          configId,
+          is_active: true,
+        },
+      ),
+    );
+    if (apiResponse.status === 200) {
+      const config = apiResponse.configs[0];
+      if (typeof this.webSockets[config.id] !== 'undefined') {
+        this.webSockets[config.id].close(true);
+        delete this.webSockets[config.id];
+        this.addWsToDictionary(config);
+      }
+    }
+  }
+
   async removeNewWs(configId: string) {
     const apiResponse = await firstValueFrom(
       this.accountService.send(

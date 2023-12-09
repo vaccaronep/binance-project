@@ -1,11 +1,13 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpException,
   HttpStatus,
   Inject,
   Post,
+  Put,
   Query,
   Req,
 } from '@nestjs/common';
@@ -121,7 +123,7 @@ export class AccountController {
       this.accountClient.send(
         { cmd: 'account_get_keys' },
         {
-          userId: userId,
+          userId,
         },
       ),
     );
@@ -162,6 +164,76 @@ export class AccountController {
     );
 
     if (confignResponse.status !== HttpStatus.OK) {
+      throw new HttpException(
+        {
+          message: confignResponse.message,
+          data: null,
+          errors: confignResponse.errors,
+        },
+        confignResponse.status,
+      );
+    }
+
+    return {
+      message: confignResponse.message,
+      data: {
+        configs: confignResponse.configs,
+      },
+      errors: null,
+    };
+  }
+
+  @Delete('/config/all')
+  @Authorization(true)
+  public async deactivateUsersConfig(
+    @Req() request: IAuthorizedRequest,
+  ): Promise<any> {
+    const userId = request.user.id;
+    const confignResponse: any = await firstValueFrom(
+      this.accountClient.send(
+        { cmd: 'account_disable' },
+        {
+          userId,
+        },
+      ),
+    );
+
+    if (confignResponse.status !== HttpStatus.OK) {
+      throw new HttpException(
+        {
+          message: confignResponse.message,
+          data: null,
+          errors: confignResponse.errors,
+        },
+        confignResponse.status,
+      );
+    }
+
+    return {
+      message: confignResponse.message,
+      data: {
+        configs: confignResponse.configs,
+      },
+      errors: null,
+    };
+  }
+
+  @Delete('/config')
+  @Authorization(true)
+  public async deactivateConfig(
+    @Req() request: IAuthorizedRequest,
+    @Query('id') id: string,
+  ): Promise<any> {
+    const confignResponse: any = await firstValueFrom(
+      this.accountClient.send(
+        { cmd: 'account_disable' },
+        {
+          configId: id,
+        },
+      ),
+    );
+
+    if (confignResponse.status !== HttpStatus.ACCEPTED) {
       throw new HttpException(
         {
           message: confignResponse.message,
@@ -227,6 +299,37 @@ export class AccountController {
         { cmd: 'account_set_keys' },
         {
           userId: userInfo.id,
+          config: body,
+        },
+      ),
+    );
+
+    return {
+      errors: null,
+      data: setAccountKeysResponse,
+    };
+  }
+
+  @Put('/set_keys')
+  @Authorization(true)
+  public async accountUpdateKeys(
+    @Query('id') id: string,
+    @Body()
+    body: {
+      is_papper_trading: boolean;
+      is_futures: boolean;
+      is_active: boolean;
+      api_key: string;
+      api_secret: string;
+      api_url: string;
+      ws_url: string;
+    },
+  ): Promise<any> {
+    const setAccountKeysResponse: any = await firstValueFrom(
+      this.accountClient.send(
+        { cmd: 'account_update' },
+        {
+          configId: id,
           config: body,
         },
       ),

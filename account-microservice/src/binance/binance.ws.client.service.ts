@@ -1,34 +1,27 @@
-// socket-client.ts
 import * as WebSocket from 'ws';
 import { timer } from 'rxjs';
-import { ConfigService } from '@nestjs/config';
 import { BinanceHttpService } from './binance.http.service';
 import { AccountUpdate } from 'src/interfaces/stream/account.update.interface';
 import { RedisService } from 'src/services/redis.service';
-// import { OrderUpdate } from 'src/interfaces/stream/order.update.interface';
 
 export class WSService {
   private ws: WebSocket;
   private isConnect = false;
   private listenKey: string = '';
   private withoutReconnect: boolean = false;
-  // private apiKey: string;
+  private interval: any;
+  private apiKey: string;
+  private wsUrl: string;
+  private userId: string;
 
   constructor(
-    private configService: ConfigService,
     private http: BinanceHttpService,
     private redisClient: RedisService,
-    private apiKey: string,
-    private secretKey: string,
-    private wsUrl: string,
-    private userId: string,
+    private config: any,
   ) {
-    // this.apiKey = this.configService.get('BINANCE_TEST_API_KEY');
-    // setInterval(
-    //   () => this.http.refreshListenKey(this.listenKey, this.apiKey),
-    //   1200000,
-    // );
-    console.log('connected user: ' + userId);
+    this.apiKey = this.config.api_key;
+    this.wsUrl = this.config.ws_url;
+    this.userId = this.config.userId;
   }
 
   async connect() {
@@ -36,6 +29,11 @@ export class WSService {
       const listenKey = await this.http.getLisnetKey(this.apiKey);
       this.listenKey = listenKey;
     }
+
+    this.interval = setInterval(
+      () => this.http.refreshListenKey(this.listenKey, this.apiKey),
+      1200000,
+    );
 
     this.ws = new WebSocket(`${this.wsUrl}/${this.listenKey}`);
 
@@ -81,6 +79,7 @@ export class WSService {
   }
 
   async close(withoutReconnect: boolean) {
+    clearInterval(this.interval);
     this.withoutReconnect = withoutReconnect;
     this.ws.close();
   }

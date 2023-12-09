@@ -56,17 +56,17 @@ export class BinanceWsWrapper implements OnModuleInit {
   private addWsToDictionary(config: IConfig) {
     const key = `${config.id}`;
     if (typeof this.webSockets[key] === 'undefined') {
-      this.webSockets[key] = new WSService(
-        this.configService,
-        this.http,
-        this.redisClient,
-        config.api_key,
-        config.api_secret,
-        this.configService.get('BINANCE_WS_TEST_BASE_URL'),
-        config.userId,
-      );
+      this.webSockets[key] = new WSService(this.http, this.redisClient, config);
       this.webSockets[key].connect();
     }
+  }
+
+  async reconnectWs(config: IConfig) {
+    if (typeof this.webSockets[config.id] !== 'undefined') {
+      this.webSockets[config.id].close(true);
+      delete this.webSockets[config.id];
+    }
+    this.addWsToDictionary(config);
   }
 
   async connectNewWs(configId: string) {
