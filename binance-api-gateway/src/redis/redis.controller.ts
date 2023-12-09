@@ -21,7 +21,7 @@ export class RedisController {
   }
 
   @EventPattern('account_update')
-  accountUpdate(message: string) {
-    this.gateway.updateAccount(message);
+  accountUpdate(data: { message: string; configId: string }) {
+    this.gateway.updateAccount(data);
   }
 }

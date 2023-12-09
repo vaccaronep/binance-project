@@ -36,7 +36,8 @@ export class MyGateway implements OnGatewayConnection {
     }
   }
 
-  updateAccount(message: string) {
-    this.server.emit('account_update', message);
+  updateAccount(data: { message: string; configId: string }) {
+    const socket = this.connectedClients.get(data.configId);
+    if (socket) socket.emit('account_update', data.message);
   }
 }

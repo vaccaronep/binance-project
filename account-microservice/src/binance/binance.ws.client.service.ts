@@ -12,6 +12,8 @@ export class WSService {
   private interval: any;
   private apiKey: string;
   private wsUrl: string;
+  private api_url: string;
+  private api_secret: string;
   private userId: string;
 
   constructor(
@@ -20,45 +22,51 @@ export class WSService {
     private config: any,
   ) {
     this.apiKey = this.config.api_key;
+    this.api_secret = this.config.api_secret;
     this.wsUrl = this.config.ws_url;
     this.userId = this.config.userId;
+    this.api_url = this.config.api_url;
   }
 
   async connect() {
     if (!this.listenKey) {
-      const listenKey = await this.http.getLisnetKey(this.apiKey);
+      const listenKey = await this.http.getLisnetKey(this.api_url, this.apiKey);
       this.listenKey = listenKey;
     }
 
-    this.interval = setInterval(
-      () => this.http.refreshListenKey(this.listenKey, this.apiKey),
-      1200000,
-    );
+    this.interval = setInterval(() => {
+      console.log(`[${this.config.name}] - refreshing license key`);
+      this.http.refreshListenKey(this.api_url, this.listenKey, this.apiKey);
+    }, 1200000);
 
     this.ws = new WebSocket(`${this.wsUrl}/${this.listenKey}`);
 
     this.ws.on('open', () => {
       this.isConnect = true;
-      console.log('The connection is established.');
+      console.log(`[${this.config.name}] - The connection is established.`);
     });
 
     this.ws.on('ping', (data: Buffer) => {
-      console.log(`A ping ${data.toString()} is received from the server.`);
+      console.log(
+        `[${
+          this.config.name
+        }] - A ping ${data.toString()} is received from the server.`,
+      );
       this.ws.pong();
     });
 
     this.ws.on('pong', () => {
-      console.log('Received PONG from server');
+      console.log(`[${this.config.name}] - Received PONG from server`);
     });
 
     this.ws.on('error', (message) => {
-      console.log(message);
+      console.log(`[${this.config.name}] - ${message}`);
       this.ws.close();
       this.isConnect = false;
     });
 
     this.ws.on('close', (message) => {
-      console.log(message);
+      console.log(`[${this.config.name}] - ${message}`);
       if (!this.withoutReconnect) {
         timer(5000).subscribe(() => {
           this.isConnect = false;
@@ -72,8 +80,12 @@ export class WSService {
       const binanceMessage: AccountUpdate = JSON.parse(message.toString());
 
       if (binanceMessage.e === 'outboundAccountPosition') {
+        console.log(`[${this.config.name}] - recieving account message`);
         const message = JSON.stringify(binanceMessage);
-        this.redisClient.publish('account_update', { message });
+        this.redisClient.publish('account_update', {
+          message,
+          configId: this.config._id,
+        });
       }
     });
   }
