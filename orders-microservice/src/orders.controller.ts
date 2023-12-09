@@ -28,15 +28,21 @@ export class OrdersController {
   }
 
   @MessagePattern({ cmd: 'order_add_ws_user' })
-  async addUserToWs(data: { userId: string }) {
-    console.log('recibiendo mensaje adicionar:' + data.userId);
-    this.wsService.connectNewWs(data.userId);
+  async addUserToWs(data: { userId: string; configId: string }) {
+    console.log('recibiendo mensaje adicionar:' + data.configId);
+    this.wsService.connectNewWs(data.configId);
   }
 
   @MessagePattern({ cmd: 'order_remove_ws_user' })
-  async removeUserToWs(data: { userId: string }) {
-    console.log('recibiendo mensaje remover:' + data.userId);
-    this.wsService.removeNewWs(data.userId);
+  async removeUserToWs(data: { userId: string; configId: string }) {
+    console.log('recibiendo mensaje remover:' + data.configId);
+    this.wsService.removeNewWs(data.configId);
+  }
+
+  @MessagePattern({ cmd: 'order_reconnect_ws_user' })
+  async recconectWs(data: { userId: string; configId: string }) {
+    console.log('recibiendo mensaje reconectar:' + data.configId);
+    this.wsService.reconnectWs(data.configId);
   }
 
   @MessagePattern({ cmd: 'orders_get_all' })

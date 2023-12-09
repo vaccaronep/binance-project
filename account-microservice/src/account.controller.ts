@@ -23,6 +23,118 @@ export class AccountController {
     return this.accountService.getAccountTrades(data.tickerId);
   }
 
+  @MessagePattern({ cmd: 'account_update' })
+  async updateAccount(data: {
+    configId: string;
+    config: IConfig;
+  }): Promise<IConfigsGetResponse> {
+    let result: IConfigsGetResponse;
+
+    if (data && data.config) {
+      const config = await this.dbService.searchConfigById(data.configId);
+      if (config) {
+        const updatedConfig = await this.dbService.updateAccount(
+          data.configId,
+          data.config,
+        );
+        result = {
+          status: HttpStatus.OK,
+          message: 'account_update_success',
+          configs: [updatedConfig],
+          errors: null,
+        };
+      } else {
+        result = {
+          status: HttpStatus.NOT_FOUND,
+          message: 'account_update_not_found',
+          configs: null,
+          errors: null,
+        };
+      }
+    } else {
+      result = {
+        status: HttpStatus.BAD_REQUEST,
+        message: 'account_update_missing_parameter',
+        configs: null,
+        errors: null,
+      };
+    }
+
+    return result;
+  }
+
+  @MessagePattern({ cmd: 'account_disable' })
+  async disableAccount(data: {
+    configId: string;
+    userId: string;
+  }): Promise<IConfigsGetResponse> {
+    let result: IConfigsGetResponse;
+
+    if (data.configId || data.userId) {
+      if (data.configId) {
+        const config = await this.dbService.searchConfigById(data.configId);
+        if (!config) {
+          result = {
+            status: HttpStatus.NOT_FOUND,
+            message: 'account_disable_config_not_found',
+            configs: null,
+            errors: null,
+          };
+        } else {
+          if (config.account_activated || config.orders_activated) {
+            result = {
+              status: HttpStatus.PRECONDITION_FAILED,
+              message: 'account_disable_config_not_allowed',
+              configs: null,
+              errors: null,
+            };
+          } else {
+            const configUpdated = await this.dbService.disableAccount(config);
+            result = {
+              status: HttpStatus.ACCEPTED,
+              message: 'account_disable_config_success',
+              configs: [configUpdated],
+              errors: null,
+            };
+          }
+        }
+      } else {
+        const configs = await this.dbService.getAccountKeysByUser({
+          userId: data.userId,
+        });
+        if (configs) {
+          const updatedConfigs = await Promise.all(
+            configs.map(async (config) => {
+              return this.dbService.disableAccount(config);
+            }),
+          );
+          result = {
+            status: HttpStatus.ACCEPTED,
+            message: 'account_disable_config_success',
+            configs: updatedConfigs,
+            errors: null,
+          };
+        } else {
+          result = {
+            status: HttpStatus.NOT_FOUND,
+            message: 'account_disable_config_not_found',
+            configs: null,
+            errors: null,
+          };
+        }
+      }
+    } else {
+      result = {
+        status: HttpStatus.BAD_REQUEST,
+        message: 'account_disable_missing_parameter',
+        configs: null,
+        errors: null,
+      };
+    }
+
+    return result;
+  }
+
   @MessagePattern({ cmd: 'account_set_keys' })
   async setAccountKeys(data: {
     userId: string;
@@ -30,16 +142,37 @@ export class AccountController {
   }): Promise<IConfigsGetResponse> {
     let result: IConfigsGetResponse;
     if (data.userId && data.config) {
-      const config = await this.dbService.setAccountKeys(
-        data.userId,
-        data.config,
+      const userConfigs = await this.dbService.getAccountKeysByUser({
+        userId: data.userId,
+      });
+
+      const isNotValidToCreate = userConfigs.filter(
+        (userConfig) =>
+          userConfig.api_key === data.config.api_key &&
+          userConfig.api_secret === data.config.api_secret &&
+          userConfig.is_papper_trading === data.config.is_papper_trading &&
+          userConfig.is_futures === data.config.is_futures,
       );
-      result = {
-        status: HttpStatus.OK,
-        message: 'account_set_keys_success',
-        configs: [config],
-        errors: null,
-      };
+
+      if (!isNotValidToCreate.length) {
+        const config = await this.dbService.setAccountKeys(
+          data.userId,
+          data.config,
+        );
+        result = {
+          status: HttpStatus.OK,
+          message: 'account_set_keys_success',
+          configs: [config],
+          errors: null,
+        };
+      } else {
+        result = {
+          status: HttpStatus.AMBIGUOUS,
+          message: 'account_set_keys_duplicated',
+          configs: [isNotValidToCreate[0]],
+          errors: null,
+        };
+      }
     } else {
       result = {
         status: HttpStatus.BAD_REQUEST,
