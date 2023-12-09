@@ -142,7 +142,6 @@ export class BinanceHttpService {
           'X-MBX-APIKEY': apiKey,
         },
       });
-      console.log(res);
       return res;
     } catch (error) {
       console.log(error);
