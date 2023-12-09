@@ -79,7 +79,10 @@ export class WSService {
     this.ws.on('message', async (message: any) => {
       const binanceMessage: OrderUpdate = JSON.parse(message.toString());
       if (binanceMessage.e === 'executionReport') {
-        const savedObject = await this.orderClient.saveOrder(binanceMessage);
+        const savedObject = await this.orderClient.saveOrder(
+          this.config.id,
+          binanceMessage,
+        );
 
         if (
           savedObject.currentOrderStatus === 'FILLED' &&
@@ -100,7 +103,7 @@ export class WSService {
 
           if (rulesResponse.status === 200) {
             const rules = rulesResponse.rules;
-            if (rules)
+            if (rules && rules.length)
               this.orderClient.placeStopLossAndTakeProfit(
                 this.config,
                 rules[0],

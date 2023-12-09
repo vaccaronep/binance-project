@@ -98,20 +98,38 @@ export class AccountController {
   @Get('')
   @Authorization(true)
   @Permission('account_get')
-  public async accounts(@Req() request: IAuthorizedRequest): Promise<any> {
+  public async accounts(
+    @Req() request: IAuthorizedRequest,
+    @Query('configId') configId: string,
+  ): Promise<any> {
     const userInfo = request.user;
-    const destroyTokenResponse: any = await firstValueFrom(
+    const accountGetnResponse: any = await firstValueFrom(
       this.accountClient.send(
         { cmd: 'account_get' },
         {
           userId: userInfo.id,
+          configId,
         },
       ),
     );
 
+    if (accountGetnResponse.status !== HttpStatus.OK) {
+      throw new HttpException(
+        {
+          message: accountGetnResponse.message,
+          data: null,
+          errors: accountGetnResponse.errors,
+        },
+        accountGetnResponse.status,
+      );
+    }
+
     return {
+      message: accountGetnResponse.message,
+      data: {
+        account: accountGetnResponse.account,
+      },
       errors: null,
-      data: destroyTokenResponse,
     };
   }
 

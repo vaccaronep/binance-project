@@ -1,7 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { NewOrder } from 'src/orders.controller';
 import { BinanceHttpService } from 'src/binance/binance.http.service';
-import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { IOrder } from 'src/schema/order.schema';
@@ -13,40 +12,68 @@ import { firstValueFrom } from 'rxjs';
 export class OrdersService {
   constructor(
     private readonly httpService: BinanceHttpService,
-    private readonly configService: ConfigService,
     @InjectModel('Order') private readonly orderModel: Model<IOrder>,
     @Inject('ACCOUNT_SERVICE') private accountService: ClientProxy,
   ) {}
 
-  async newOrder(newOrder: NewOrder, userId: string) {
-    const [config] = await firstValueFrom(
+  async getAllOrdersFromBinance(configId: string, symbol: string) {
+    const configResponse = await firstValueFrom(
       await this.accountService.send(
-        { cmd: 'account_get_keys' },
+        { cmd: 'account_get_keys_by_id' },
         {
-          userId,
-          is_futures: newOrder.market === 'SPOT' ? false : true,
-          is_papper_trading: newOrder.testing,
+          configId,
         },
       ),
     );
 
-    if (config) {
-      const apikey = config.api_key;
-      const secret = config.api_secret;
-      this.httpService.placeNewOrder(config.api_url, apikey, secret, {
-        symbol: newOrder.symbol.toUpperCase(),
-        side: newOrder.side.toLocaleUpperCase(),
-        type: newOrder.type.toLocaleUpperCase(),
-        strategyId: newOrder.strategy,
-        quoteOrderQty: newOrder.quantity,
-      });
-
-      return true;
-    } else return false;
+    if (configResponse.status === 200) {
+      const config = configResponse.configs[0];
+      if (config) {
+        const apikey = config.api_key;
+        const secret = config.api_secret;
+        return this.httpService.getAllOrders(config.api_url, apikey, secret, {
+          symbol,
+          limit: 600,
+        });
+      }
+    }
   }
 
-  public async getAll(limit: number, symbol: string): Promise<IOrder[]> {
-    const contidionts = {};
+  async newOrder(newOrder: NewOrder, userId: string, configId: string) {
+    const configResponse = await firstValueFrom(
+      await this.accountService.send(
+        { cmd: 'account_get_keys_by_id' },
+        {
+          configId,
+        },
+      ),
+    );
+
+    if (configResponse.status === 200) {
+      const config = configResponse.configs[0];
+      if (config) {
+        const apikey = config.api_key;
+        const secret = config.api_secret;
+        this.httpService.placeNewOrder(config.api_url, apikey, secret, {
+          symbol: newOrder.symbol.toUpperCase(),
+          side: newOrder.side.toLocaleUpperCase(),
+          type: newOrder.type.toLocaleUpperCase(),
+          strategyId: newOrder.strategy,
+          quoteOrderQty: newOrder.quantity,
+        });
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  public async getAll(
+    configId: string,
+    limit: number,
+    symbol: string,
+  ): Promise<IOrder[]> {
+    const contidionts = [];
 
     if (symbol) {
       const rgx = (pattern) => new RegExp(`.*${pattern}.*`);
@@ -63,14 +90,22 @@ export class OrdersService {
       ];
     }
 
-    let query = this.orderModel.find(contidionts);
+    contidionts.push({
+      configId: {
+        $eq: configId,
+      },
+    });
+
+    let query = this.orderModel.find({
+      $and: contidionts,
+    });
 
     if (limit) query = query.limit(limit);
 
     return query.exec();
   }
 
-  saveOrder(binanceOrder: OrderUpdate): Promise<IOrder> {
+  saveOrder(configId: string, binanceOrder: OrderUpdate): Promise<IOrder> {
     const userModel = new this.orderModel({
       eventType: binanceOrder.e,
       eventTime: binanceOrder.E,
@@ -96,6 +131,7 @@ export class OrdersService {
       orderCreationTime: binanceOrder.O,
       quoteOrderQuantity: binanceOrder.Q,
       strategyId: binanceOrder.j,
+      configId,
     });
     return userModel.save();
   }
