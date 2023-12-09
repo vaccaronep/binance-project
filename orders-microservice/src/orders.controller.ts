@@ -28,19 +28,19 @@ export class OrdersController {
 
   @MessagePattern({ cmd: 'order_add_ws_user' })
   async addUserToWs(data: { userId: string; configId: string }) {
-    console.log('recibiendo mensaje adicionar:' + data.configId);
+    console.log('recibiendo mensaje adicionar ws:' + data.configId);
     this.wsService.connectNewWs(data.configId);
   }
 
   @MessagePattern({ cmd: 'order_remove_ws_user' })
   async removeUserToWs(data: { userId: string; configId: string }) {
-    console.log('recibiendo mensaje remover:' + data.configId);
+    console.log('recibiendo mensaje remover ws:' + data.configId);
     this.wsService.removeNewWs(data.configId);
   }
 
   @MessagePattern({ cmd: 'order_reconnect_ws_user' })
   async recconectWs(data: { userId: string; configId: string }) {
-    console.log('recibiendo mensaje reconectar:' + data.configId);
+    console.log('recibiendo mensaje reconectar ws:' + data.configId);
     this.wsService.reconnectWs(data.configId);
   }
 

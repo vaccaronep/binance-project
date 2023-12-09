@@ -12,18 +12,18 @@ export class BinanceHttpService {
     private readonly configService: ConfigService,
   ) {}
 
-  async getLisnetKey(apiKey: string): Promise<string> {
+  async getLisnetKey(baseUrl: string, apiKey: string): Promise<string> {
     const {
       data: { listenKey },
     } = await firstValueFrom(
-      this._publicRequest('POST', '/api/v3/userDataStream', apiKey),
+      this._publicRequest(baseUrl, 'POST', '/api/v3/userDataStream', apiKey),
     );
     return listenKey;
   }
 
-  async refreshListenKey(listenKey: string, apiKey: string) {
+  async refreshListenKey(baseUrl: string, listenKey: string, apiKey: string) {
     await firstValueFrom(
-      this._publicRequest('PUT', '/api/v3/userDataStream', apiKey, {
+      this._publicRequest(baseUrl, 'PUT', '/api/v3/userDataStream', apiKey, {
         listenKey,
       }),
     );
@@ -86,16 +86,17 @@ export class BinanceHttpService {
     return data;
   }
 
-  private async getServerData(apikey: string) {
+  private async getServerData(baseUrl: string, apikey: string) {
     const {
       data: { serverTime },
     } = await firstValueFrom(
-      this._publicRequest('GET', '/api/v1/time', apikey),
+      this._publicRequest(baseUrl, 'GET', '/api/v1/time', apikey),
     );
     return serverTime;
   }
 
   private _publicRequest(
+    baseUrl: string,
     method: string,
     path: string,
     apiKey: string,
@@ -107,7 +108,7 @@ export class BinanceHttpService {
     }
     return this.http.request({
       method,
-      baseURL: this.configService.get('BINANCE_API_TEST_BASE_URL'),
+      baseURL: baseUrl,
       url: path,
       headers: {
         'Content-Type': 'application/json',
@@ -126,7 +127,7 @@ export class BinanceHttpService {
     secret: string,
     params: any = {},
   ) {
-    const timestamp = await this.getServerData(apiKey);
+    const timestamp = await this.getServerData(baseUrl, apiKey);
     const queryString = buildQueryString({ ...params, timestamp });
     const signature = encryptParams(secret, queryString);
     try {

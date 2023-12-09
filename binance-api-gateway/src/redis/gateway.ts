@@ -29,10 +29,11 @@ export class MyGateway implements OnGatewayConnection {
     }
   }
 
-  newMessage(message: string, configId: string) {
-    const socket = this.connectedClients.get(configId);
-    if (socket) socket.emit('order_update', message);
-    // this.server.emit('order_update', message);
+  newMessage(data: { message: string; configId: string }) {
+    const socket = this.connectedClients.get(data.configId);
+    if (socket) {
+      socket.emit('order_update', data.message);
+    }
   }
 
   updateAccount(message: string) {

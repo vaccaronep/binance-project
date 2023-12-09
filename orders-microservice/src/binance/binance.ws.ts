@@ -35,7 +35,6 @@ export class BinanceWsWrapper implements OnModuleInit {
 
     if (data.status === 200) {
       data.users.map(async (user) => {
-        console.log('activating ws to ->' + user.id);
         const apiResponse = await firstValueFrom(
           this.accountService.send(
             { cmd: 'account_get_keys' },
@@ -56,7 +55,8 @@ export class BinanceWsWrapper implements OnModuleInit {
   }
 
   addWsToDictionary(config: any) {
-    const key = `${config.id}`;
+    console.log('adding ws config: ' + config._id);
+    const key = `${config._id}`;
     if (typeof this.webSockets[key] === 'undefined') {
       this.webSockets[key] = new WSService(
         this.http,
@@ -81,9 +81,9 @@ export class BinanceWsWrapper implements OnModuleInit {
     );
     if (apiResponse.status === 200) {
       const config = apiResponse.configs[0];
-      if (typeof this.webSockets[config.id] !== 'undefined') {
-        this.webSockets[config.id].close(true);
-        delete this.webSockets[config.id];
+      if (typeof this.webSockets[config._id] !== 'undefined') {
+        this.webSockets[config._id].close(true);
+        delete this.webSockets[config._id];
         this.addWsToDictionary(config);
       }
     }
@@ -101,14 +101,13 @@ export class BinanceWsWrapper implements OnModuleInit {
     );
     if (apiResponse.status === 200) {
       const config = apiResponse.configs[0];
-      if (typeof this.webSockets[config.id] !== 'undefined') {
-        this.webSockets[config.id].close(true);
-        delete this.webSockets[config.id];
+      if (typeof this.webSockets[config._id] !== 'undefined') {
+        this.webSockets[config._id].close(true);
+        delete this.webSockets[config._id];
       }
     }
   }
   async connectNewWs(configId: string) {
-    console.log('conectando ws:' + configId);
     const apiResponse = await firstValueFrom(
       this.accountService.send(
         { cmd: 'account_get_keys_by_id' },
