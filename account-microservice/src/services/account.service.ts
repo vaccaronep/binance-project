@@ -10,10 +10,12 @@ export class AccountService {
     private readonly configService: ConfigService,
   ) {}
 
-  async getAccount() {
-    const apikey = this.configService.get('BINANCE_TEST_API_KEY');
-    const secret = this.configService.get('BINANCE_TEST_API_SECRET');
-    const response = await this.binanceHttpService.getAccount(apikey, secret);
+  async getAccount(apiUrl: string, apikey: string, secret: string) {
+    const response = await this.binanceHttpService.getAccount(
+      apiUrl,
+      apikey,
+      secret,
+    );
     return response.data;
   }
 
@@ -21,6 +23,7 @@ export class AccountService {
     const apikey = this.configService.get('BINANCE_TEST_API_KEY');
     const secret = this.configService.get('BINANCE_TEST_API_SECRET');
     const response = await this.binanceHttpService.getAccountTradeList(
+      '',
       apikey,
       secret,
       ticker,

@@ -29,10 +29,16 @@ export class BinanceHttpService {
     );
   }
 
-  async getAccount(apikey: string, secret: string) {
+  async getAccount(apiUrl: string, apikey: string, secret: string) {
     try {
       const result = await firstValueFrom(
-        await this._privateRequest('GET', '/api/v3/account', apikey, secret),
+        await this._privateRequest(
+          apiUrl,
+          'GET',
+          '/api/v3/account',
+          apikey,
+          secret,
+        ),
       );
       return result;
     } catch (error) {
@@ -40,12 +46,24 @@ export class BinanceHttpService {
     }
   }
 
-  async getAccountTradeList(apiKey: string, secret: string, ticker: string) {
+  async getAccountTradeList(
+    apiUrl: string,
+    apiKey: string,
+    secret: string,
+    ticker: string,
+  ) {
     try {
       const result = await firstValueFrom(
-        await this._privateRequest('GET', '/api/v3/myTrades', apiKey, secret, {
-          symbol: ticker,
-        }),
+        await this._privateRequest(
+          apiUrl,
+          'GET',
+          '/api/v3/myTrades',
+          apiKey,
+          secret,
+          {
+            symbol: ticker,
+          },
+        ),
       );
       return result;
     } catch (error) {
@@ -86,6 +104,7 @@ export class BinanceHttpService {
   }
 
   private async _privateRequest(
+    apiUrl: string,
     method: string,
     path: string,
     apiKey: string,
@@ -99,7 +118,7 @@ export class BinanceHttpService {
     try {
       const res = this.http.request({
         method,
-        baseURL: this.configService.get('BINANCE_API_TEST_BASE_URL'),
+        baseURL: apiUrl,
         url: `${path}?${queryString}&signature=${signature}`,
         headers: {
           'Content-Type': 'application/json',

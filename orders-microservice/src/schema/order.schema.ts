@@ -25,6 +25,7 @@ export interface IOrder extends mongoose.Document {
   orderCreationTime: number; //1499405658657,            // Order creation time
   quoteOrderQuantity: string; //"0.00000000",             // Quote Order Quantity
   strategyId: number;
+  configId: string;
 }
 
 export const OrderSchema = new mongoose.Schema<IOrder>({
@@ -54,4 +55,5 @@ export const OrderSchema = new mongoose.Schema<IOrder>({
   orderCreationTime: { type: Number },
   quoteOrderQuantity: { type: String },
   strategyId: { type: Number },
+  configId: { type: String },
 });

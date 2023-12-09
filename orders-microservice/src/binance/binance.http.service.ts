@@ -29,6 +29,25 @@ export class BinanceHttpService {
     );
   }
 
+  async getAllOrders(
+    baseUrl: string,
+    apikey: string,
+    secret: string,
+    params: any,
+  ) {
+    const data = await firstValueFrom(
+      await this._privateRequest(
+        baseUrl,
+        'GET',
+        '/api/v3/allOrders',
+        apikey,
+        secret,
+        params,
+      ),
+    );
+    return data;
+  }
+
   async placeNewOrder(
     baseUrl: string,
     apikey: string,

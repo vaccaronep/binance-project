@@ -4,6 +4,10 @@ import { MessagePattern } from '@nestjs/microservices';
 import { IConfig } from './interfaces/config.interface';
 import { DbService } from './services/db.service';
 import { IConfigsGetResponse } from './interfaces/api/config-get-response';
+import {
+  BinanceAccount,
+  IBinanceAccountGetResponse,
+} from './interfaces/api/binance-account-get-response';
 
 @Controller()
 export class AccountController {
@@ -13,9 +17,51 @@ export class AccountController {
   ) {}
 
   @MessagePattern({ cmd: 'account_get' })
-  getAccount(data: { userId: string }) {
-    console.log(data.userId);
-    return this.accountService.getAccount();
+  async getAccount(data: {
+    userId: string;
+    configId: string;
+  }): Promise<IBinanceAccountGetResponse> {
+    let result: IBinanceAccountGetResponse;
+    if (data.userId || data.configId) {
+      const config = await this.dbService.searchConfigById(data.configId);
+      if (config) {
+        const accountResponse: any = await this.accountService.getAccount(
+          config.api_url,
+          config.api_key,
+          config.api_secret,
+        );
+
+        const { balances, commissionRates, accountType } = accountResponse;
+
+        const account: BinanceAccount = {
+          accountType,
+          balances,
+          commissionRates,
+        };
+
+        result = {
+          status: HttpStatus.OK,
+          message: 'account_get_success',
+          account,
+          errors: null,
+        };
+      } else {
+        result = {
+          status: HttpStatus.NOT_FOUND,
+          message: 'account_get_config_not_found',
+          account: null,
+          errors: null,
+        };
+      }
+    } else {
+      result = {
+        status: HttpStatus.PRECONDITION_FAILED,
+        message: 'account_get_missing_parameters',
+        account: null,
+        errors: null,
+      };
+    }
+    return result;
   }
 
   @MessagePattern({ cmd: 'account_get_trades' })
@@ -176,7 +222,7 @@ export class AccountController {
     } else {
       result = {
         status: HttpStatus.BAD_REQUEST,
-        message: 'account_get_keys_missing_parameter',
+        message: 'account_set_keys_missing_parameter',
         configs: null,
         errors: null,
       };

@@ -22,9 +22,8 @@ export class OrdersController {
   ) {}
 
   @MessagePattern({ cmd: 'order_new' })
-  placeOrder(data: { order: NewOrder; userId: string }) {
-    this.orderService.newOrder(data.order, data.userId);
-    return true;
+  placeOrder(data: { order: NewOrder; userId: string; configId: string }) {
+    return this.orderService.newOrder(data.order, data.userId, data.configId);
   }
 
   @MessagePattern({ cmd: 'order_add_ws_user' })
@@ -47,12 +46,17 @@ export class OrdersController {
 
   @MessagePattern({ cmd: 'orders_get_all' })
   public async getAllOrders(data: {
+    configId: string;
     limit: number;
     symbol: string;
   }): Promise<IOrdersGetResponse> {
     let result: IOrdersGetResponse;
     try {
-      const orders = await this.orderService.getAll(data.limit, data.symbol);
+      const orders = await this.orderService.getAll(
+        data.configId,
+        data.limit,
+        data.symbol,
+      );
       result = {
         status: HttpStatus.OK,
         message: 'orders_get_all_success',
@@ -68,6 +72,18 @@ export class OrdersController {
       };
     }
     return result;
+  }
+
+  @MessagePattern({ cmd: 'orders_get_all_binance' })
+  public async getAllOrdersFromBinance(data: {
+    configId: string;
+    symbol: string;
+  }) {
+    const response = await this.orderService.getAllOrdersFromBinance(
+      data.configId,
+      data.symbol,
+    );
+    return response.data;
   }
 
   // @MessagePattern({ cmd: 'order_bulk' })

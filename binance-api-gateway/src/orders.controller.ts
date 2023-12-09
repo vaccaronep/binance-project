@@ -27,13 +27,14 @@ export class OrdersController {
   @Authorization(true)
   @Permission('orders_get_all')
   async findAll(
+    @Query('configId') configId: string,
     @Query('limit') limit?: string,
     @Query('symbol') symbol?: string,
   ) {
     const ordersMicroserviceResponse: any = await firstValueFrom(
       this.ordersMicroService.send(
         { cmd: 'orders_get_all' },
-        { limit, symbol },
+        { configId, limit, symbol },
       ),
     );
 
@@ -56,6 +57,41 @@ export class OrdersController {
     };
   }
 
+  @Get('/all/binance')
+  @Authorization(true)
+  async getAllBinance(
+    @Query('configId') configId: string,
+    @Query('limit') limit?: string,
+    @Query('symbol') symbol?: string,
+  ) {
+    const ordersMicroserviceResponse: any = await firstValueFrom(
+      this.ordersMicroService.send(
+        { cmd: 'orders_get_all_binance' },
+        { configId, symbol },
+      ),
+    );
+
+    return ordersMicroserviceResponse;
+
+    // if (ordersMicroserviceResponse.status !== HttpStatus.OK) {
+    //   throw new HttpException(
+    //     {
+    //       message: ordersMicroserviceResponse.message,
+    //       data: null,
+    //       errors: ordersMicroserviceResponse.errors,
+    //     },
+    //     ordersMicroserviceResponse.status,
+    //   );
+    // }
+    // return {
+    //   message: ordersMicroserviceResponse.message,
+    //   data: {
+    //     orders: ordersMicroserviceResponse.orders,
+    //   },
+    //   errors: null,
+    // };
+  }
+
   @Post('/new_order')
   @Authorization(true)
   @Permission('order_new')
@@ -67,16 +103,15 @@ export class OrdersController {
       side: string;
       type: string;
       strategy: string;
-      market: string;
-      testing: boolean;
     },
     @Req() request: IAuthorizedRequest,
+    @Query('configId') configId: string,
   ) {
     const userId = request.user.id;
     const ordersMicroserviceResponse: any = await firstValueFrom(
       this.ordersMicroService.send(
         { cmd: 'order_new' },
-        { order: data, userId },
+        { order: data, userId, configId },
       ),
     );
     return {
