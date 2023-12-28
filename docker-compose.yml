@@ -61,6 +61,17 @@ services:
     depends_on:
       - redis
       - dbusers
+  market:
+    container_name: "market-api"
+    build: ./market-microservice
+    restart: always
+    hostname: market
+    env_file:
+      - ./market-microservice/.env
+    networks:
+      - backend
+    depends_on:
+      - redis
   identity:
     container_name: "identity-api"
     build: ./identity-microservice

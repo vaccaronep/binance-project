@@ -4,7 +4,8 @@ import { UserService } from './services/user.service';
 import { MongooseModule } from '@nestjs/mongoose';
 import { UserSchema } from './schema/user.schema';
 import { MongoConfigService } from './services/config/mongo.config.service';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ClientProxyFactory, Transport } from '@nestjs/microservices';
 
 @Module({
   imports: [
@@ -21,6 +22,21 @@ import { ConfigModule } from '@nestjs/config';
     ]),
   ],
   controllers: [AppController],
-  providers: [UserService],
+  providers: [
+    UserService,
+    {
+      provide: 'MARKET_SERVICE',
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => {
+        return ClientProxyFactory.create({
+          transport: Transport.TCP,
+          options: {
+            host: configService.get('MARKET_SERVICE_HOST'),
+            port: configService.get('MARKET_SERVICE_PORT'),
+          },
+        });
+      },
+    },
+  ],
 })
 export class AppModule {}

@@ -12,4 +12,5 @@ export interface IConfig extends Document {
   ws_url: string;
   account_activated: boolean;
   orders_activated: boolean;
+  market_activated: boolean;
 }

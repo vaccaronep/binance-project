@@ -65,8 +65,36 @@ export class AccountController {
   }
 
   @MessagePattern({ cmd: 'account_get_trades' })
-  async getAccountTrades(data: { userId: string; tickerId: string }) {
-    return this.accountService.getAccountTrades(data.tickerId);
+  async getAccountTrades(data: {
+    userId: string;
+    tickerId: string;
+    configId: string;
+  }) {
+    if (data.configId) {
+      const config = await this.dbService.searchConfigById(data.configId);
+      if (config) {
+        return this.accountService.getAccountTrades(
+          config.api_url,
+          config.api_key,
+          config.api_secret,
+          data.tickerId,
+        );
+      } else {
+        return {
+          status: HttpStatus.NOT_FOUND,
+          message: 'account_get_trades_config_not_found',
+          account: null,
+          errors: null,
+        };
+      }
+    } else {
+      return {
+        status: HttpStatus.PRECONDITION_FAILED,
+        message: 'account_get_trades_missing_parameters',
+        account: null,
+        errors: null,
+      };
+    }
   }
 
   @MessagePattern({ cmd: 'account_update' })
@@ -235,6 +263,7 @@ export class AccountController {
     userId: string;
     account_activated?: boolean;
     orders_activated?: boolean;
+    market_activated?: boolean;
   }): Promise<IConfigsGetResponse> {
     let result: IConfigsGetResponse;
     if (data.userId) {
@@ -243,6 +272,7 @@ export class AccountController {
         is_active: true,
         account_activated: data.account_activated,
         orders_activated: data.orders_activated,
+        market_activated: data.market_activated,
       });
       if (configs) {
         result = {
@@ -367,6 +397,49 @@ export class AccountController {
           };
         }
         const updatedConfig = await this.dbService.enableOrder(config);
+        result = {
+          status: HttpStatus.OK,
+          message: 'config_enable_order_success',
+          configs: [updatedConfig],
+          errors: null,
+        };
+      } catch (e) {
+        result = {
+          status: HttpStatus.PRECONDITION_FAILED,
+          message: 'config_enable_order_failed',
+          configs: null,
+          errors: e.errors,
+        };
+      }
+    } else {
+      result = {
+        status: HttpStatus.BAD_REQUEST,
+        message: 'config_enable_order',
+        configs: null,
+        errors: null,
+      };
+    }
+    return result;
+  }
+
+  @MessagePattern({ cmd: 'config_enable_market' })
+  public async enableMarketWsToUser(data: {
+    configId: string;
+    userId: string;
+  }): Promise<IConfigsGetResponse> {
+    let result: IConfigsGetResponse;
+    if (data.configId) {
+      try {
+        const config = await this.dbService.searchConfigById(data.configId);
+        if (!config) {
+          result = {
+            status: HttpStatus.NOT_FOUND,
+            message: 'config_enable_order_config_not_found',
+            configs: null,
+            errors: null,
+          };
+        }
+        const updatedConfig = await this.dbService.enableMarket(config);
         result = {
           status: HttpStatus.OK,
           message: 'config_enable_order_success',

@@ -53,6 +53,19 @@ import { ClientProxyFactory, Transport } from '@nestjs/microservices';
         });
       },
     },
+    {
+      provide: 'MARKET_SERVICE',
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => {
+        return ClientProxyFactory.create({
+          transport: Transport.TCP,
+          options: {
+            host: configService.get('MARKET_SERVICE_HOST'),
+            port: configService.get('MARKET_SERVICE_PORT'),
+          },
+        });
+      },
+    },
   ],
   exports: [BinanceHttpService, BinanceWsWrapper],
 })
