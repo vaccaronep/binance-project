@@ -95,6 +95,40 @@ export class AccountController {
     };
   }
 
+  @Post('/enablemarket')
+  @Authorization(true)
+  async enablemarket(
+    @Req() request: IAuthorizedRequest,
+    @Query('configId') configId: string,
+  ) {
+    const userId = request.user.id;
+    const accountMicroserviceResponse: any = await firstValueFrom(
+      this.accountClient.send(
+        { cmd: 'config_enable_market' },
+        { userId, configId },
+      ),
+    );
+
+    if (accountMicroserviceResponse.status !== HttpStatus.OK) {
+      throw new HttpException(
+        {
+          message: accountMicroserviceResponse.message,
+          data: null,
+          errors: accountMicroserviceResponse.errors,
+        },
+        accountMicroserviceResponse.status,
+      );
+    }
+
+    return {
+      message: accountMicroserviceResponse.message,
+      data: {
+        configs: accountMicroserviceResponse.configs,
+      },
+      errors: null,
+    };
+  }
+
   @Get('')
   @Authorization(true)
   @Permission('account_get')
@@ -273,10 +307,10 @@ export class AccountController {
 
   @Get('/trades')
   @Authorization(true)
-  @Permission('account_get_trades')
   public async accountTrades(
     @Req() request: IAuthorizedRequest,
     @Query('ticker') ticker: string,
+    @Query('id') id: string,
   ): Promise<any> {
     const userInfo = request.user;
     const destroyTokenResponse: any = await firstValueFrom(
@@ -284,6 +318,7 @@ export class AccountController {
         { cmd: 'account_get_trades' },
         {
           userId: userInfo.id,
+          configId: id,
           tickerId: ticker,
         },
       ),

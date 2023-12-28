@@ -70,6 +70,7 @@ export class AppController {
     email?: string;
     is_active?: boolean;
     is_confirmed?: boolean;
+    userId?: string;
   }): Promise<IUsersGetResponse> {
     let result: IUsersGetResponse;
     try {
@@ -86,7 +87,7 @@ export class AppController {
         status: HttpStatus.PRECONDITION_FAILED,
         message: 'users_get_all_failed',
         users: null,
-        errors: error.errors,
+        errors: error,
       };
     }
 
@@ -185,6 +186,37 @@ export class AppController {
       return {
         status: HttpStatus.BAD_REQUEST,
         message: 'user_deactivate_bad_request',
+        user: null,
+      };
+    }
+  }
+
+  @MessagePattern({ cmd: 'user_favourites' })
+  public async userFavourites(data: { userId: string; ticker: string }) {
+    if (data.userId) {
+      const user = await this.userService.searchUserById(data.userId);
+      if (!user) {
+        return {
+          status: HttpStatus.BAD_REQUEST,
+          message: 'user_favourites_user_not_found',
+          user: null,
+        };
+      }
+
+      const userUpdated = await this.userService.updateFavourites(
+        user,
+        data.ticker,
+      );
+
+      return {
+        status: HttpStatus.OK,
+        message: 'user_favourites_success',
+        user: userUpdated,
+      };
+    } else {
+      return {
+        status: HttpStatus.BAD_REQUEST,
+        message: 'user_favourites_bad_request',
         user: null,
       };
     }

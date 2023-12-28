@@ -12,6 +12,7 @@ export interface IConfigSchema extends mongoose.Document {
   ws_url: string;
   account_activated: boolean;
   orders_activated: boolean;
+  market_activated: boolean;
 }
 
 export const ConfigSchema = new mongoose.Schema<IConfigSchema>({
@@ -59,6 +60,10 @@ export const ConfigSchema = new mongoose.Schema<IConfigSchema>({
     default: false,
   },
   orders_activated: {
+    type: Boolean,
+    default: false,
+  },
+  market_activated: {
     type: Boolean,
     default: false,
   },

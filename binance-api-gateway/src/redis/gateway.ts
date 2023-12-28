@@ -40,4 +40,9 @@ export class MyGateway implements OnGatewayConnection {
     const socket = this.connectedClients.get(data.configId);
     if (socket) socket.emit('account_update', data.message);
   }
+
+  updateMarket(data: { message: string; configId: string }) {
+    const socket = this.connectedClients.get(data.configId);
+    if (socket) socket.emit('market_update', data.message);
+  }
 }

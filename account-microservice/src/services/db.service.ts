@@ -12,6 +12,7 @@ export class DbService {
     @Inject(forwardRef(() => BinanceWsWrapper))
     private readonly wsService: BinanceWsWrapper,
     @Inject('ORDERS_SERVICE') private readonly ordersClient: ClientProxy,
+    @Inject('MARKET_SERVICE') private readonly marketClient: ClientProxy,
   ) {}
 
   async disableAccount(config: IConfig): Promise<IConfig> {
@@ -80,6 +81,7 @@ export class DbService {
     is_papper_trading?: boolean;
     account_activated?: boolean;
     orders_activated?: boolean;
+    market_activated?: boolean;
   }): Promise<IConfig[]> {
     let conditions = {};
     conditions = { userId: data.userId };
@@ -97,6 +99,9 @@ export class DbService {
     }
     if (data.orders_activated) {
       conditions = { ...conditions, orders_activated: data.orders_activated };
+    }
+    if (data.market_activated) {
+      conditions = { ...conditions, market_activated: data.market_activated };
     }
     return this.configModel.find(conditions).exec();
   }
@@ -148,6 +153,39 @@ export class DbService {
       } else {
         this.ordersClient.emit(
           { cmd: 'order_remove_ws_user' },
+          { configId: config._id },
+        );
+      }
+
+      return userModel;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  public async enableMarket(config: IConfig): Promise<IConfig> {
+    try {
+      const userModel = await this.configModel
+        .findByIdAndUpdate(
+          config._id,
+          {
+            market_activated: !config.market_activated,
+          },
+          { new: true },
+        )
+        .select('-api_key -api_secret')
+        .exec();
+
+      if (userModel.market_activated) {
+        console.log('activating market');
+        this.marketClient.emit(
+          { cmd: 'market_add_ws_user' },
+          { configId: config._id },
+        );
+      } else {
+        console.log('removing market');
+        this.marketClient.emit(
+          { cmd: 'market_remove_ws_user' },
           { configId: config._id },
         );
       }

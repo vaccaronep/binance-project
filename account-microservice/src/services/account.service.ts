@@ -19,11 +19,14 @@ export class AccountService {
     return response.data;
   }
 
-  async getAccountTrades(ticker: string) {
-    const apikey = this.configService.get('BINANCE_TEST_API_KEY');
-    const secret = this.configService.get('BINANCE_TEST_API_SECRET');
+  async getAccountTrades(
+    apiUrl: string,
+    apikey: string,
+    secret: string,
+    ticker: string,
+  ) {
     const response = await this.binanceHttpService.getAccountTradeList(
-      '',
+      apiUrl,
       apikey,
       secret,
       ticker,

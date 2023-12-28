@@ -75,7 +75,10 @@ export class UsersController {
   })
   async getallusers() {
     const userMicroserviceResponse: any = await firstValueFrom(
-      this.userServiceClient.send({ cmd: 'users_get_all' }, {}),
+      this.userServiceClient.send(
+        { cmd: 'users_get_all' },
+        { is_active: true },
+      ),
     );
 
     return {
@@ -83,7 +86,7 @@ export class UsersController {
       data: {
         users: userMicroserviceResponse.users,
       },
-      errors: null,
+      errors: userMicroserviceResponse.errors,
     };
   }
 
@@ -162,6 +165,41 @@ export class UsersController {
       message: destroyTokenResponse.message,
       errors: null,
       data: null,
+    };
+  }
+
+  @Put('/favourites')
+  @Authorization(true)
+  public async favourites(
+    @Req() request: IAuthorizedRequest,
+    @Body() body: { ticker: string },
+  ): Promise<LogoutUserResponseDto> {
+    const userInfo = request.user;
+    const favouritesResponse: any = await firstValueFrom(
+      this.userServiceClient.send(
+        { cmd: 'user_favourites' },
+        {
+          userId: userInfo.id,
+          ticker: body.ticker,
+        },
+      ),
+    );
+
+    if (favouritesResponse.status !== HttpStatus.OK) {
+      throw new HttpException(
+        {
+          message: favouritesResponse.message,
+          data: null,
+          errors: favouritesResponse.errors,
+        },
+        favouritesResponse.status,
+      );
+    }
+
+    return {
+      message: favouritesResponse.message,
+      errors: null,
+      data: favouritesResponse.user,
     };
   }
 
