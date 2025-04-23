@@ -5,6 +5,10 @@ import { OrderUpdate } from 'src/interfaces/stream/order.update.interface';
 import { RedisService } from 'src/services/redis.service';
 import { OrdersService } from 'src/services/orders.service';
 import { ClientProxy } from '@nestjs/microservices';
+import {
+  IRuleExecutor,
+  getRuleExecutorFlow,
+} from 'src/helpers/rules.excutor.helper';
 
 export class WSService {
   private ws: WebSocket;
@@ -94,10 +98,7 @@ export class WSService {
           binanceMessage,
         );
 
-        if (
-          savedObject.currentOrderStatus === 'FILLED' &&
-          savedObject.orderType === 'MARKET'
-        ) {
+        if (savedObject.currentOrderStatus === 'FILLED') {
           const rulesResponse = await firstValueFrom(
             this.rulesService.send(
               { cmd: 'rules_get_all' },
@@ -113,12 +114,15 @@ export class WSService {
 
           if (rulesResponse.status === 200) {
             const rules = rulesResponse.rules;
-            if (rules && rules.length)
-              this.orderClient.placeStopLossAndTakeProfit(
-                this.config,
-                rules[0],
+            if (rules && rules.length) {
+              const ruleExecutor: IRuleExecutor = getRuleExecutorFlow(
                 savedObject,
+                rules[0],
               );
+              ruleExecutor.execute(this.config, {
+                orderClient: this.orderClient,
+              });
+            }
           }
         }
 

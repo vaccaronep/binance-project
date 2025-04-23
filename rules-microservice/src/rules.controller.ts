@@ -18,7 +18,13 @@ export class RulesController {
   }): Promise<IRuleCreateResponse> {
     let result: IRuleCreateResponse;
     const rule = params.rule;
-    if (!rule.ticker || rule.userId || rule.pyramiding || rule.quantity_trade) {
+    if (
+      !rule.ticker ||
+      !rule.userId ||
+      !rule.pyramiding ||
+      !rule.quantity_trade ||
+      !rule.side
+    ) {
       result = {
         status: HttpStatus.CONFLICT,
         message: 'rule_create_conflict',
@@ -65,6 +71,7 @@ export class RulesController {
           data.is_active,
           data.is_future,
           data.strategyId,
+          data.side,
         );
         result = {
           rules,

@@ -10,6 +10,7 @@ export interface IRulesSchema extends mongoose.Document {
   quantity_trade: number;
   pyramiding: number;
   type: string;
+  side: string;
   actual_trade: number;
   actions: IActionSchema[];
   created_by: string;
@@ -49,6 +50,12 @@ export const RuleSchema = new mongoose.Schema<IRulesSchema>(
       enum: ['OCO', 'TRAILING'],
       default: 'OCO',
       required: [true, 'Type can not be empty'],
+    },
+    side: {
+      type: String,
+      enum: ['BUY', 'SELL'],
+      default: 'BUY',
+      required: [true, 'Side can not be empty'],
     },
     quantity_trade: {
       type: Number,

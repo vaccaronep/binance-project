@@ -169,7 +169,8 @@ export class OrdersService {
         stopPrice,
         stopLimitPrice,
         stopLimitTimeInForce: 'GTC',
-        strategyId: config._id,
+        stopStrategyId: order.strategyId.toString(),
+        limitStrategyId: order.strategyId.toString(),
       };
 
       this.httpService.placeNewOcoOrder(

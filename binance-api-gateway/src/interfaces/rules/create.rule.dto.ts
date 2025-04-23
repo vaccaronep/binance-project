@@ -9,6 +9,11 @@ enum ruleType {
   'OCO' = 'OCO',
   'TRAILING' = 'TRAILING',
 }
+
+enum ruleSide {
+  'BUY' = 'BUY',
+  'SELL' = 'SELL',
+}
 class ActionDto {
   @ApiProperty({
     required: true,
@@ -42,6 +47,12 @@ export class CreateRuleDto {
     example: Object.keys(ruleType),
   })
   type: string;
+  @ApiProperty({
+    required: true,
+    enum: ruleType,
+    example: Object.keys(ruleSide),
+  })
+  side: string;
   @ApiProperty({
     required: true,
     uniqueItems: true,

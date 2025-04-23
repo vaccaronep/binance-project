@@ -44,6 +44,7 @@ export class DbService {
         },
         { new: true },
       )
+      .select('-api_secret')
       .exec();
 
     if (accountUpdated.account_activated) {

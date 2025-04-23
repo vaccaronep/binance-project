@@ -126,6 +126,7 @@ export class UsersController {
       message: createTokenResponse.message,
       data: {
         token: createTokenResponse.token,
+        user: userMicroserviceResponse.user,
       },
       errors: null,
     };
