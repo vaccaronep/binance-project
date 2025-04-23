@@ -9,6 +9,7 @@ export interface IRule extends Document {
   strategyId: number; //tv_id en strategy
   quantity_trade: number;
   type: string;
+  side: string;
   pyramiding: number;
   actions: IAction[];
   actual_trade: number;
@@ -28,4 +29,5 @@ export interface IGetAllRulesParams {
   ticker?: string;
   is_active?: boolean;
   is_future?: boolean;
+  side?: string;
 }

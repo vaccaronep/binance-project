@@ -19,6 +19,7 @@ export class RulesService {
     is_active?: boolean,
     is_future?: boolean,
     strategyId?: number,
+    side?: string,
   ): Promise<IRule[]> {
     const conditions = [];
 
@@ -42,6 +43,7 @@ export class RulesService {
     if (is_active) conditions.push({ is_active });
     if (is_future) conditions.push({ is_future });
     if (strategyId) conditions.push({ strategyId });
+    if (side) conditions.push({ side });
 
     return await this.ruleModel
       .find({
@@ -66,14 +68,15 @@ export class RulesService {
 
     await ruleModel.save();
 
-    this.pythonHttpService.updateConfiguration(
-      rule.ticker,
-      rule.strategyId,
-      rule.is_future ? 'FUTURES' : 'SPOT',
-      rule.pyramiding,
-      rule.quantity_trade,
-      rule.actual_trade,
-    );
+    this.pythonHttpService.updateConfiguration({
+      ticker: rule.ticker,
+      strategyId: rule.strategyId,
+      is_futures: rule.is_future,
+      pyramiding: rule.pyramiding,
+      qty: rule.quantity_trade,
+      actual_trade: ruleModel.actual_trade,
+      side: rule.side,
+    });
 
     return ruleModel;
   }

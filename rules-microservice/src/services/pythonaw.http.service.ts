@@ -10,23 +10,34 @@ export class PythonAnyWhereHttp {
     private readonly configService: ConfigService,
   ) {}
 
-  async updateConfiguration(
-    ticker: string,
-    strategyId: number,
-    market: string,
-    pyramiding: number,
-    qty: number,
-    actual_trade: number,
-  ) {
+  async updateConfiguration(params: {
+    ticker: string;
+    strategyId: number;
+    is_futures: boolean;
+    pyramiding: number;
+    qty: number;
+    actual_trade: number;
+    side: string;
+  }) {
+    const {
+      ticker,
+      strategyId,
+      is_futures,
+      pyramiding,
+      qty,
+      actual_trade,
+      side,
+    } = params;
     const url = `${this.configService.get('PYTHON_ANYWHERE_BASE_URL')}/config`;
     const { data } = await firstValueFrom(
       await this.http.post(url, {
-        key: `${strategyId}_${market}_${ticker}`,
+        key: `${strategyId}_${is_futures ? 'FUTURES' : 'SPOT'}_${ticker}`,
         pyramiding,
         qty,
         actual_trade,
         is_active: true,
         strategyId,
+        side,
       }),
     );
     return data;

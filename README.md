@@ -1,4 +1,13 @@
 # binance-project
+
+Proyecto para probar NestJS, Docker, Websockets y una arquitectura orientada a eventos.
+
+Esto proyecto tiene como objetivo servir de tracking a un bot de trading. El flujo es el siguiente:
+
+Se configuran alarmas en trading view sobre ciertos tickers, esto se conecta a un webhook hecho en python (hosteado en pythonanywhere) que ejecuta ordenes MARKET sobre el par que se disparo la alarma. La idea es que este proyecto tenga configuradas reglas y se conecte al websocker de binance, y al detectar nuevas ordenes con estado COMPLETED ejecute estas reglas (mas que nada TPs y SLs). Y luego dar la opcion de un seguimiento desde la misma (cancelar la misma, ver cuantas ordenes en simultaneo existen, limitar la cantidad de ordenes etc). Mismo agregar subcuentas.
+
+Logre algo parecido pero menos robusto en MAKE, una herramienta no-code.
+
  Notas:
 dbaccount en verdad es dbidentity, despues lo cambio.
 
